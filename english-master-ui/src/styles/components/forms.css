@@ -1,0 +1,143 @@
+@layer components {
+  /* ── Labels ── */
+  .form-label {
+    @apply block text-xs font-medium tracking-wide mb-1;
+    color: var(--color-text-label);
+    font-family: var(--font-sans);
+  }
+
+  /* ── Inputs ── */
+  .form-input {
+    @apply w-full border rounded-[var(--radius-input)] px-3 py-2 text-sm leading-normal outline-none
+           transition-[border-color,box-shadow,background] duration-150 appearance-none;
+    font-family: var(--font-sans);
+    background: var(--color-bg-input);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .form-input:focus {
+    @apply bg-white;
+    border-color: var(--color-sage-600);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-sage-600) 12%, transparent);
+  }
+
+  .form-input:disabled {
+    @apply cursor-not-allowed;
+    background: var(--color-bg-disabled);
+    color: var(--color-text-muted);
+  }
+
+  .form-input-error {
+    border-color: var(--color-error-400);
+    background: #FFF8F8;
+  }
+
+  .form-input-error:focus {
+    border-color: var(--color-error-500);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error-500) 10%, transparent);
+  }
+
+  /* ── Field error message ── */
+  .form-field-error {
+    @apply block text-[0.6875rem] mt-0.5;
+    font-family: var(--font-sans);
+    color: var(--color-error-500);
+  }
+
+  /* ── Two-column field pair ── */
+  .form-row {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  /* ── Password toggle button ── */
+  .input-toggle-btn {
+    @apply absolute right-2.5 top-1/2 -translate-y-1/2 p-0 border-none bg-transparent
+           cursor-pointer text-[0.6875rem] font-semibold uppercase tracking-widest
+           transition-colors duration-150;
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+    letter-spacing: 0.04em;
+  }
+
+  .input-toggle-btn:hover {
+    color: var(--color-surface-600);
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply w-full border-none cursor-pointer rounded-[var(--radius-btn)]
+           px-4 py-2.5 text-sm font-semibold tracking-wide
+           transition-[background,transform] duration-150;
+    font-family: var(--font-sans);
+    background: var(--color-ink-900);
+    color: var(--color-parchment);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-ink-800);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    @apply translate-y-px;
+  }
+
+  .btn-primary:disabled {
+    @apply cursor-not-allowed opacity-45;
+  }
+
+  .btn-social {
+    @apply flex items-center justify-center cursor-pointer
+           transition-[border-color,color,background] duration-150;
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: var(--radius-social);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-input);
+    color: var(--color-surface-500);
+  }
+
+  .btn-social:hover:not(:disabled) {
+    border-color: var(--color-ink-900);
+    color: var(--color-ink-900);
+    @apply bg-white;
+  }
+
+  .btn-social:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* ── Divider ── */
+  .auth-divider {
+    @apply flex items-center gap-3 my-4;
+  }
+
+  .auth-divider-line {
+    @apply flex-1 h-px;
+    background: var(--color-surface-100);
+  }
+
+  .auth-divider-label {
+    @apply text-[0.6875rem] not-italic uppercase tracking-widest;
+    font-family: var(--font-sans);
+    color: var(--color-text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Alert ── */
+  .alert-error {
+    @apply text-sm rounded-[var(--radius-input)] px-3.5 py-2.5;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    background: var(--color-error-50);
+    border: 1px solid var(--color-error-100);
+    color: var(--color-error-600);
+  }
+}
+
+/* ── Responsive: collapse form-row on small screens ── */
+@media (max-width: 520px) {
+  .form-row {
+    @apply grid-cols-1;
+  }
+}

@@ -1,0 +1,37 @@
+import { ReactNode, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import SideBar from '@/components/SideBar';
+import Header from '@/components/Header';
+import { getUserInfo } from '@/service/user';
+import { setUserInfo } from '@/redux/user';
+import { selectUser } from '@/redux/user/selectors';
+import { AppDispatch } from '@/redux/store';
+
+interface LayoutProps {
+  children: ReactNode;
+}
+
+const Layout = ({ children }: LayoutProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { id } = useSelector(selectUser);
+
+  useEffect(() => {
+    if (!id) {
+      getUserInfo().then((res) => {
+        dispatch(setUserInfo(res.data.data));
+      });
+    }
+  }, []);
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <SideBar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto bg-stone-50">{children}</main>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

@@ -1,0 +1,53 @@
+import { useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { selectUser } from '@/redux/user/selectors';
+import { useClickOutside } from '@/hook/useClickOutside';
+
+export default function Header() {
+  const { firstName, lastName, avatarUrl } = useSelector(selectUser);
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(dropdownRef, () => setOpen(false));
+
+  const initials =
+    firstName && lastName
+      ? `${firstName[0]}${lastName[0]}`.toUpperCase()
+      : firstName
+        ? firstName[0].toUpperCase()
+        : '?';
+
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'User';
+
+  return (
+    <header className="h-14 bg-white border-b border-surface-200 flex items-center justify-end px-6 flex-shrink-0">
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setOpen((prev) => !prev)}
+          className="flex items-center justify-center w-9 h-9 rounded-full overflow-hidden
+                     bg-ink-900 text-parchment text-sm font-semibold
+                     ring-2 ring-transparent hover:ring-gold-500/40
+                     transition-all duration-150 cursor-pointer focus:outline-none"
+          style={{ fontFamily: 'var(--font-sans)' }}
+          aria-label="User menu"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+          ) : (
+            initials
+          )}
+        </button>
+
+        {open && (
+          <div className="absolute right-0 mt-2 w-48 bg-white border border-surface-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+            <div className="px-4 py-3 border-b border-surface-100">
+              <p className="text-sm font-semibold text-surface-900 truncate" style={{ fontFamily: 'var(--font-sans)' }}>
+                {fullName}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

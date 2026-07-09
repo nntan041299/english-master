@@ -1,0 +1,93 @@
+server:
+  servlet:
+    context-path: /english-master-service/api
+  port: 8080
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+
+db:
+  host: ${DB_HOST}
+  port: ${DB_PORT:5432}
+  name: ${DB_NAME}
+  username: ${DB_USERNAME}
+  password: ${DB_PASSWORD}
+
+spring:
+  application:
+    name: english-master-service
+
+  datasource:
+    url: jdbc:postgresql://${db.host}:${db.port}/${db.name}
+    username: ${db.username}
+    password: ${db.password}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 250MB
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration/englishmaster
+    table: flyway_schema_history_store
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            url: ${GOOGLE_OAUTH2_URL}
+            client-id: ${GOOGLE_OAUTH2_CLIENT_ID}
+            client-secret: ${GOOGLE_OAUTH2_CLIENT_SECRET}
+            scope: profile email
+            redirect-uri: ${GOOGLE_OAUTH2_REDIRECT_URL}
+
+allowed:
+  urls: ${ALLOWED_ORIGIN:https://your-frontend-domain.com}
+
+jwt:
+  secret: ${JWT_SECRET:local-dev-secret-key-must-be-at-least-256-bits-long}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}    # 15 min
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
+
+app:
+  clients:
+    googleUserInfo:
+      url: https://www.googleapis.com
+    googleOauth2Api:
+      url: https://oauth2.googleapis.com
+
+
+token:
+  blacklist:
+    cleanup-interval-ms: ${TOKEN_BLACKLIST_CLEANUP_INTERVAL_MS:3600000} # 1 hour
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  base-url: https://generativelanguage.googleapis.com/v1
+  model: gemini-3.1-flash-lite
+
+word:
+  enrichment:
+    cron: ${WORD_ENRICHMENT_CRON:0 */1 * * * *}
+  meaning:
+    practice:
+      cron: ${WORD_MEANING_PRACTICE_CRON:0 */1 * * * *}
+  practice:
+    assignment:
+      cron: ${WORD_PRACTICE_ASSIGNMENT_CRON:0 */1 * * * *}

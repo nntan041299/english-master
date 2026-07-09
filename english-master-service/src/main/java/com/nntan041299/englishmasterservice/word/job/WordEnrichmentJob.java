@@ -4,7 +4,7 @@ import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.common.util.StringUtils;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
-import com.nntan041299.englishmasterservice.word.dto.WordMeaningAiResponse;
+import com.nntan041299.englishmasterservice.word.dto.MeaningAiResponse;
 import com.nntan041299.englishmasterservice.word.entity.Meaning;
 import com.nntan041299.englishmasterservice.word.entity.PartOfSpeech;
 import com.nntan041299.englishmasterservice.word.entity.Word;
@@ -13,6 +13,7 @@ import com.nntan041299.englishmasterservice.word.repository.WordRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,11 +52,11 @@ public class WordEnrichmentJob {
                 .map(Enum::name)
                 .collect(Collectors.joining(", "));
 
-        WordMeaningAiResponse[] dtos;
+        MeaningAiResponse[] responseMeanings;
         try {
-            dtos = aiService.generateContent(
+            responseMeanings = aiService.generateContent(
                     aiPromptManager.get(AiPromptKey.WORD_ENRICHMENT).formatted(partOfSpeechKeys, wordList),
-                    WordMeaningAiResponse[].class);
+                    MeaningAiResponse[].class);
         } catch (Exception ex) {
             log.error("word_enrichment_job ai_service_error error={}", ex.getMessage(), ex);
             return;
@@ -63,12 +64,30 @@ public class WordEnrichmentJob {
 
         Map<String, Word> wordMap = words.stream().collect(Collectors.toMap(Word::getText, w -> w));
 
-        List<Meaning> meanings = Arrays.stream(dtos)
+        List<MeaningAiResponse> validMeanings = Arrays.stream(responseMeanings)
                 .filter(dto -> {
                     boolean found = wordMap.containsKey(dto.word());
                     if (!found) log.warn("word_enrichment_job unknown_word word={}", dto.word());
                     return found;
                 })
+                .toList();
+
+        List<Word> invalidMeanings = validMeanings.stream()
+                .filter(dto -> PartOfSpeech.OTHER == parsePartOfSpeech(dto.partOfSpeech()))
+                .map(dto -> wordMap.get(dto.word()))
+                .distinct()
+                .toList();
+
+        if (!invalidMeanings.isEmpty()) {
+            log.info("word_enrichment_job removing_invalid_words words={}", invalidMeanings.stream()
+                    .map(Word::getText).collect(Collectors.joining(", ")));
+            wordRepository.deleteAll(invalidMeanings);
+        }
+
+        Set<String> invalidWordTexts = invalidMeanings.stream().map(Word::getText).collect(Collectors.toSet());
+
+        List<Meaning> meanings = validMeanings.stream()
+                .filter(dto -> !invalidWordTexts.contains(dto.word()))
                 .map(dto -> Meaning.builder()
                         .word(wordMap.get(dto.word()))
                         .partOfSpeech(parsePartOfSpeech(dto.partOfSpeech()))

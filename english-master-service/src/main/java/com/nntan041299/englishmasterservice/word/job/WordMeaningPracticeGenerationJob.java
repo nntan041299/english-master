@@ -3,8 +3,8 @@ package com.nntan041299.englishmasterservice.word.job;
 import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
-import com.nntan041299.englishmasterservice.word.dto.WordMeaningPracticeAiResponse;
-import com.nntan041299.englishmasterservice.word.dto.WordMeaningPracticeAiResponse.PracticeItem;
+import com.nntan041299.englishmasterservice.word.dto.PracticeAiResponse;
+import com.nntan041299.englishmasterservice.word.dto.PracticeAiResponse.PracticeItem;
 import com.nntan041299.englishmasterservice.word.entity.Meaning;
 import com.nntan041299.englishmasterservice.word.entity.Practice;
 import com.nntan041299.englishmasterservice.word.entity.PracticeOption;
@@ -59,9 +59,9 @@ public class WordMeaningPracticeGenerationJob {
         String prompt = aiPromptManager.get(AiPromptKey.WORD_MEANING_PRACTICE_GENERATION)
                 .formatted(PRACTICES_PER_MEANING, meaningList, PRACTICES_PER_MEANING);
 
-        WordMeaningPracticeAiResponse[] responses;
+        PracticeAiResponse[] responses;
         try {
-            responses = aiService.generateContent(prompt, WordMeaningPracticeAiResponse[].class);
+            responses = aiService.generateContent(prompt, PracticeAiResponse[].class);
         } catch (Exception ex) {
             log.error("word_meaning_practice_generation_job ai_service_error error={}", ex.getMessage(), ex);
             return;

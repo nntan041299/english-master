@@ -27,7 +27,7 @@ public class WordService {
 
     @Transactional
     public WordResponse saveWord(SaveWordRequest request) {
-        String normalizedText = StringUtils.capitalizeFirst(request.getText().trim().toLowerCase());
+        String normalizedText = request.getText().trim().toLowerCase();
         if (normalizedText.isEmpty()) {
             throw new IllegalArgumentException("Word text is required");
         }

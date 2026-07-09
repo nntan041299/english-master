@@ -57,7 +57,7 @@ public class WordMeaningPracticeGenerationJob {
                 .collect(Collectors.joining("; "));
 
         String prompt = aiPromptManager.get(AiPromptKey.WORD_MEANING_PRACTICE_GENERATION)
-                .formatted(PRACTICES_PER_MEANING, meaningList, PRACTICES_PER_MEANING);
+                .formatted(PRACTICES_PER_MEANING, PRACTICES_PER_MEANING, meaningList);
 
         PracticeAiResponse[] responses;
         try {

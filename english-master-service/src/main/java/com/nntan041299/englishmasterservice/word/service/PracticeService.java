@@ -2,6 +2,7 @@ package com.nntan041299.englishmasterservice.word.service;
 
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
+import com.nntan041299.englishmasterservice.common.util.StringUtils;
 import com.nntan041299.englishmasterservice.word.dto.AnswerPracticeRequest;
 import com.nntan041299.englishmasterservice.word.dto.AnswerPracticeResponse;
 import com.nntan041299.englishmasterservice.word.dto.PracticeResponse;
@@ -44,15 +45,15 @@ public class PracticeService {
                     Meaning meaning = practice.getMeaning();
                     return new PracticeResponse(
                             meaning.getWord().getId(),
-                            meaning.getWord().getText(),
+                            StringUtils.capitalizeFirst(meaning.getWord().getText()),
                             userPractice.getLevel(),
                             practice.getId(),
                             meaning.getPartOfSpeech().name(),
-                            meaning.getMeaning(),
-                            practice.getOption1(),
-                            practice.getOption2(),
-                            practice.getOption3(),
-                            practice.getOption4(),
+                            StringUtils.capitalizeFirst(meaning.getMeaning()),
+                            StringUtils.capitalizeFirst(practice.getOption1()),
+                            StringUtils.capitalizeFirst(practice.getOption2()),
+                            StringUtils.capitalizeFirst(practice.getOption3()),
+                            StringUtils.capitalizeFirst(practice.getOption4()),
                             practice.getCorrectAnswer());
                 })
                 .toList();

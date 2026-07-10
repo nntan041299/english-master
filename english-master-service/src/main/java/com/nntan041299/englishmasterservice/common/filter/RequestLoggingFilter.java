@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.common.filter;
 
+import com.nntan041299.englishmasterservice.auth.entity.User;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -9,6 +10,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -28,12 +31,22 @@ public class RequestLoggingFilter implements Filter {
         String method = httpRequest.getMethod();
         String uri = httpRequest.getRequestURI();
         String query = httpRequest.getQueryString();
+        String path = uri + (query != null ? "?" + query : "");
 
-        log.info("--> {} {}{}", method, uri, query != null ? "?" + query : "");
+        String userId = resolveUserId();
+        log.info("--> {} {} user={}", method, path, userId);
 
         chain.doFilter(request, response);
 
         long duration = System.currentTimeMillis() - start;
-        log.info("<-- {} {}{} {} ({}ms)", method, uri, query != null ? "?" + query : "", httpResponse.getStatus(), duration);
+        log.info("<-- {} {} status={} user={} ({}ms)", method, path, httpResponse.getStatus(), userId, duration);
+    }
+
+    private String resolveUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
+            return String.valueOf(user.getId());
+        }
+        return "anonymous";
     }
 }

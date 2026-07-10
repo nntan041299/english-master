@@ -1,5 +1,5 @@
-import { API_BASE_URL } from '@/config/serverApiConfig';
-import { request, ENDPOINT } from '@/rest';
+import { API_BASE_URL } from "@/config/serverApiConfig";
+import { request, ENDPOINT } from "@/rest";
 
 interface LoginParams {
   username: string;
@@ -31,11 +31,22 @@ export const getGoogleLoginUrl = (): string => {
 
 export const getGoogleToken = async ({ code, state }: GoogleTokenParams) => {
   return request.get({
-    path: API_BASE_URL + ENDPOINT.GOOGLE_LOGIN_GET_TOKEN + '?code=' + code + '&state=' + state,
+    path:
+      API_BASE_URL +
+      ENDPOINT.GOOGLE_LOGIN_GET_TOKEN +
+      "?code=" +
+      code +
+      "&state=" +
+      state,
   });
 };
 
-export const signUp = async ({ username, email, password, fullName }: SignUpParams) => {
+export const signUp = async ({
+  username,
+  email,
+  password,
+  fullName,
+}: SignUpParams) => {
   return await request.post({
     path: API_BASE_URL + ENDPOINT.SIGN_UP,
     body: { username, email, password, fullName },

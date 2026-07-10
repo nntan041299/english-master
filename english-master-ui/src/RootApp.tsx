@@ -1,15 +1,15 @@
-import 'primeicons/primeicons.css';
+import "primeicons/primeicons.css";
 
-import { Suspense } from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import store from '@/redux/store';
-import PageLoader from '@/components/PageLoader';
-import { PrimeReactProvider } from 'primereact/api';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from '@/context/AuthProvider';
-import AppRouter from '@/router/AppRouter';
-import AuthRouter from '@/router/AuthRouter';
+import { Suspense } from "react";
+import { BrowserRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import store from "@/redux/store";
+import PageLoader from "@/components/PageLoader";
+import { PrimeReactProvider } from "primereact/api";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider, useAuth } from "@/context/AuthProvider";
+import AppRouter from "@/router/AppRouter";
+import AuthRouter from "@/router/AuthRouter";
 
 const queryClient = new QueryClient();
 

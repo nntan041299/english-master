@@ -14,7 +14,7 @@ const Loading = ({ isLoading }: LoadingProps) => {
         </div>
         <span
           className="text-xs font-medium tracking-widest uppercase text-white/40"
-          style={{ fontFamily: 'var(--font-sans)' }}
+          style={{ fontFamily: "var(--font-sans)" }}
         >
           Loading
         </span>

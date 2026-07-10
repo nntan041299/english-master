@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { FaApple, FaFacebookF, FaGithub, FaGoogle } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import type { AxiosError } from 'axios';
-import Loading from '@/components/Loading';
-import { getGoogleLoginUrl } from '@/service/auth';
-import { useRegister } from '@/hook/useRegister';
+import { useState } from "react";
+import { FaApple, FaFacebookF, FaGithub, FaGoogle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
+import Loading from "@/components/Loading";
+import { getGoogleLoginUrl } from "@/service/auth";
+import { useRegister } from "@/hook/useRegister";
 
 interface SignupErrors {
   fullName: string;
@@ -17,21 +17,21 @@ interface SignupErrors {
 const SignUp = () => {
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [signupErrors, setSignupErrors] = useState<SignupErrors>({
-    fullName: '',
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    fullName: "",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const { mutate: register, isPending, isError, error } = useRegister();
@@ -43,25 +43,30 @@ const SignUp = () => {
       email: string;
       password: string;
       confirmPassword: string;
-    } = { fullName, username, email, password, confirmPassword }
+    } = { fullName, username, email, password, confirmPassword },
   ): boolean {
     const next: SignupErrors = {
-      fullName: '',
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
+      fullName: "",
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
     };
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!values.fullName.trim()) next.fullName = 'Required';
-    if (!values.username.trim()) next.username = 'Required';
-    if (!values.email.trim()) next.email = 'Required';
-    else if (!emailPattern.test(values.email.trim())) next.email = 'Invalid email';
-    if (!values.password) next.password = 'Required';
-    if (!values.confirmPassword) next.confirmPassword = 'Required';
-    if (values.password && values.confirmPassword && values.password !== values.confirmPassword) {
-      next.confirmPassword = 'Passwords do not match';
+    if (!values.fullName.trim()) next.fullName = "Required";
+    if (!values.username.trim()) next.username = "Required";
+    if (!values.email.trim()) next.email = "Required";
+    else if (!emailPattern.test(values.email.trim()))
+      next.email = "Invalid email";
+    if (!values.password) next.password = "Required";
+    if (!values.confirmPassword) next.confirmPassword = "Required";
+    if (
+      values.password &&
+      values.confirmPassword &&
+      values.password !== values.confirmPassword
+    ) {
+      next.confirmPassword = "Passwords do not match";
     }
 
     setSignupErrors(next);
@@ -75,11 +80,11 @@ const SignUp = () => {
   }
 
   const clearError = (key: keyof SignupErrors) => {
-    if (signupErrors[key]) setSignupErrors((prev) => ({ ...prev, [key]: '' }));
+    if (signupErrors[key]) setSignupErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
   function handleSocialLogin(provider: string) {
-    if (provider === 'google') window.location.href = getGoogleLoginUrl();
+    if (provider === "google") window.location.href = getGoogleLoginUrl();
   }
 
   const apiError = error as AxiosError<{ data: string }> | null;
@@ -104,7 +109,8 @@ const SignUp = () => {
 
           {isError && (
             <div className="alert-error mb-4">
-              {apiError?.response?.data?.data || 'Server error, try again later'}
+              {apiError?.response?.data?.data ||
+                "Server error, try again later"}
             </div>
           )}
 
@@ -118,16 +124,18 @@ const SignUp = () => {
                   value={fullName}
                   onChange={(e) => {
                     setFullName(e.target.value);
-                    clearError('fullName');
+                    clearError("fullName");
                   }}
                   onBlur={() => signupValidate()}
                   disabled={isPending}
                   placeholder="John Doe"
                   aria-invalid={!!signupErrors.fullName}
-                  className={`form-input ${signupErrors.fullName ? 'form-input-error' : ''}`}
+                  className={`form-input ${signupErrors.fullName ? "form-input-error" : ""}`}
                 />
                 {signupErrors.fullName && (
-                  <small className="form-field-error">{signupErrors.fullName}</small>
+                  <small className="form-field-error">
+                    {signupErrors.fullName}
+                  </small>
                 )}
               </label>
 
@@ -138,16 +146,18 @@ const SignUp = () => {
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
-                    clearError('username');
+                    clearError("username");
                   }}
                   onBlur={() => signupValidate()}
                   disabled={isPending}
                   placeholder="johndoe"
                   aria-invalid={!!signupErrors.username}
-                  className={`form-input ${signupErrors.username ? 'form-input-error' : ''}`}
+                  className={`form-input ${signupErrors.username ? "form-input-error" : ""}`}
                 />
                 {signupErrors.username && (
-                  <small className="form-field-error">{signupErrors.username}</small>
+                  <small className="form-field-error">
+                    {signupErrors.username}
+                  </small>
                 )}
               </label>
             </div>
@@ -160,13 +170,13 @@ const SignUp = () => {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  clearError('email');
+                  clearError("email");
                 }}
                 onBlur={() => signupValidate()}
                 disabled={isPending}
                 placeholder="you@example.com"
                 aria-invalid={!!signupErrors.email}
-                className={`form-input ${signupErrors.email ? 'form-input-error' : ''}`}
+                className={`form-input ${signupErrors.email ? "form-input-error" : ""}`}
               />
               {signupErrors.email && (
                 <small className="form-field-error">{signupErrors.email}</small>
@@ -179,18 +189,18 @@ const SignUp = () => {
                 <span className="form-label">Password</span>
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      clearError('password');
-                      clearError('confirmPassword');
+                      clearError("password");
+                      clearError("confirmPassword");
                     }}
                     onBlur={() => signupValidate()}
                     disabled={isPending}
                     placeholder="••••••••"
                     aria-invalid={!!signupErrors.password}
-                    className={`form-input pr-14 ${signupErrors.password ? 'form-input-error' : ''}`}
+                    className={`form-input pr-14 ${signupErrors.password ? "form-input-error" : ""}`}
                   />
                   <button
                     type="button"
@@ -198,11 +208,13 @@ const SignUp = () => {
                     disabled={isPending}
                     className="input-toggle-btn"
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
                 {signupErrors.password && (
-                  <small className="form-field-error">{signupErrors.password}</small>
+                  <small className="form-field-error">
+                    {signupErrors.password}
+                  </small>
                 )}
               </label>
 
@@ -210,17 +222,17 @@ const SignUp = () => {
                 <span className="form-label">Confirm password</span>
                 <div className="relative">
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
-                      clearError('confirmPassword');
+                      clearError("confirmPassword");
                     }}
                     onBlur={() => signupValidate()}
                     disabled={isPending}
                     placeholder="••••••••"
                     aria-invalid={!!signupErrors.confirmPassword}
-                    className={`form-input pr-14 ${signupErrors.confirmPassword ? 'form-input-error' : ''}`}
+                    className={`form-input pr-14 ${signupErrors.confirmPassword ? "form-input-error" : ""}`}
                   />
                   <button
                     type="button"
@@ -228,17 +240,19 @@ const SignUp = () => {
                     disabled={isPending}
                     className="input-toggle-btn"
                   >
-                    {showConfirmPassword ? 'Hide' : 'Show'}
+                    {showConfirmPassword ? "Hide" : "Show"}
                   </button>
                 </div>
                 {signupErrors.confirmPassword && (
-                  <small className="form-field-error">{signupErrors.confirmPassword}</small>
+                  <small className="form-field-error">
+                    {signupErrors.confirmPassword}
+                  </small>
                 )}
               </label>
             </div>
 
             <button disabled={isPending} className="btn-primary mt-1">
-              {isPending ? 'Creating account…' : 'Create Account'}
+              {isPending ? "Creating account…" : "Create Account"}
             </button>
           </form>
 
@@ -251,7 +265,7 @@ const SignUp = () => {
           <div className="flex justify-center gap-2">
             <button
               type="button"
-              onClick={() => handleSocialLogin('google')}
+              onClick={() => handleSocialLogin("google")}
               disabled={isPending}
               className="btn-social"
               aria-label="Continue with Google"
@@ -260,7 +274,7 @@ const SignUp = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleSocialLogin('facebook')}
+              onClick={() => handleSocialLogin("facebook")}
               disabled={isPending}
               className="btn-social"
               aria-label="Continue with Facebook"
@@ -269,7 +283,7 @@ const SignUp = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleSocialLogin('github')}
+              onClick={() => handleSocialLogin("github")}
               disabled={isPending}
               className="btn-social"
               aria-label="Continue with GitHub"
@@ -278,7 +292,7 @@ const SignUp = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleSocialLogin('apple')}
+              onClick={() => handleSocialLogin("apple")}
               disabled={isPending}
               className="btn-social"
               aria-label="Continue with Apple"
@@ -288,8 +302,8 @@ const SignUp = () => {
           </div>
 
           <p className="auth-footer-text">
-            Already have an account?{' '}
-            <a className="auth-footer-link" onClick={() => navigate('/')}>
+            Already have an account?{" "}
+            <a className="auth-footer-link" onClick={() => navigate("/")}>
               Sign in
             </a>
           </p>

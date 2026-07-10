@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { selectUser } from '@/redux/user/selectors';
-import { useClickOutside } from '@/hook/useClickOutside';
+import { useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import { selectUser } from "@/redux/user/selectors";
+import { useClickOutside } from "@/hook/useClickOutside";
 
 export default function Header() {
   const { firstName, lastName, avatarUrl } = useSelector(selectUser);
@@ -15,9 +15,9 @@ export default function Header() {
       ? `${firstName[0]}${lastName[0]}`.toUpperCase()
       : firstName
         ? firstName[0].toUpperCase()
-        : '?';
+        : "?";
 
-  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'User';
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || "User";
 
   return (
     <header className="h-14 bg-white border-b border-surface-200 flex items-center justify-end px-6 flex-shrink-0">
@@ -28,11 +28,15 @@ export default function Header() {
                      bg-ink-900 text-parchment text-sm font-semibold
                      ring-2 ring-transparent hover:ring-gold-500/40
                      transition-all duration-150 cursor-pointer focus:outline-none"
-          style={{ fontFamily: 'var(--font-sans)' }}
+          style={{ fontFamily: "var(--font-sans)" }}
           aria-label="User menu"
         >
           {avatarUrl ? (
-            <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+            <img
+              src={avatarUrl}
+              alt="avatar"
+              className="w-full h-full object-cover"
+            />
           ) : (
             initials
           )}
@@ -41,7 +45,10 @@ export default function Header() {
         {open && (
           <div className="absolute right-0 mt-2 w-48 bg-white border border-surface-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
             <div className="px-4 py-3 border-b border-surface-100">
-              <p className="text-sm font-semibold text-surface-900 truncate" style={{ fontFamily: 'var(--font-sans)' }}>
+              <p
+                className="text-sm font-semibold text-surface-900 truncate"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
                 {fullName}
               </p>
             </div>

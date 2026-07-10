@@ -1,28 +1,28 @@
 /* eslint-disable react-refresh/only-export-components */
-import { lazy } from 'react';
-import { RouteObject } from 'react-router-dom';
+import { lazy } from "react";
+import { RouteObject } from "react-router-dom";
 
-const NotFound = lazy(() => import('@/pages/NotFound'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Vocabulary = lazy(() => import('@/pages/Vocabulary'));
-const Practice = lazy(() => import('@/pages/Practice'));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Vocabulary = lazy(() => import("@/pages/Vocabulary"));
+const Practice = lazy(() => import("@/pages/Practice"));
 
 const routes: Record<string, RouteObject[]> = {
   default: [
     {
-      path: '/',
+      path: "/",
       element: <Dashboard />,
     },
     {
-      path: '/vocabulary',
+      path: "/vocabulary",
       element: <Vocabulary />,
     },
     {
-      path: '/practice',
+      path: "/practice",
       element: <Practice />,
     },
     {
-      path: '*',
+      path: "*",
       element: <NotFound />,
     },
   ],

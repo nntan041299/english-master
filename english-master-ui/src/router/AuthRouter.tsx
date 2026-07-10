@@ -1,9 +1,9 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from "react-router-dom";
 
-import LoginPage from '@/pages/Login';
-import NotFound from '@/pages/NotFound';
-import GoogleOauthCallBack from '@/pages/GoogleOauthCallBack';
-import SignUp from '@/pages/SignUp';
+import LoginPage from "@/pages/Login";
+import NotFound from "@/pages/NotFound";
+import GoogleOauthCallBack from "@/pages/GoogleOauthCallBack";
+import SignUp from "@/pages/SignUp";
 
 export default function AuthRouter() {
   return (

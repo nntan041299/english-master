@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { FaApple, FaFacebookF, FaGithub, FaGoogle } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import type { AxiosError } from 'axios';
+import { useState } from "react";
+import { FaApple, FaFacebookF, FaGithub, FaGoogle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
 
-import Loading from '@/components/Loading';
-import { useLogin } from '@/hook/useLogin';
-import { getGoogleLoginUrl } from '@/service/auth';
+import Loading from "@/components/Loading";
+import { useLogin } from "@/hook/useLogin";
+import { getGoogleLoginUrl } from "@/service/auth";
 
 interface LoginErrors {
   username: string;
@@ -15,23 +15,23 @@ interface LoginErrors {
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [loginErrors, setLoginErrors] = useState<LoginErrors>({
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   });
 
   const { mutate: login, isPending, isError, error } = useLogin();
 
   function loginValidate(
-    values: { username: string; password: string } = { username, password }
+    values: { username: string; password: string } = { username, password },
   ): boolean {
-    const next: LoginErrors = { username: '', password: '' };
-    if (!values.username.trim()) next.username = 'Please fill in the username';
-    if (!values.password) next.password = 'Please fill in the password';
+    const next: LoginErrors = { username: "", password: "" };
+    if (!values.username.trim()) next.username = "Please fill in the username";
+    if (!values.password) next.password = "Please fill in the password";
     setLoginErrors(next);
     return !next.username && !next.password;
   }
@@ -43,7 +43,7 @@ const LoginPage = () => {
   }
 
   function handleSocialLogin(provider: string) {
-    if (provider === 'google') window.location.href = getGoogleLoginUrl();
+    if (provider === "google") window.location.href = getGoogleLoginUrl();
   }
 
   const apiError = error as AxiosError<{ data: string }> | null;
@@ -68,7 +68,8 @@ const LoginPage = () => {
 
           {isError && (
             <div className="alert-error mb-4">
-              {apiError?.response?.data?.data || 'Server error, try again later'}
+              {apiError?.response?.data?.data ||
+                "Server error, try again later"}
             </div>
           )}
 
@@ -80,16 +81,19 @@ const LoginPage = () => {
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
-                  if (loginErrors.username) setLoginErrors((p) => ({ ...p, username: '' }));
+                  if (loginErrors.username)
+                    setLoginErrors((p) => ({ ...p, username: "" }));
                 }}
                 onBlur={() => loginValidate({ username, password })}
                 disabled={isPending}
                 placeholder="you@example.com"
                 aria-invalid={!!loginErrors.username}
-                className={`form-input ${loginErrors.username ? 'form-input-error' : ''}`}
+                className={`form-input ${loginErrors.username ? "form-input-error" : ""}`}
               />
               {loginErrors.username && (
-                <small className="form-field-error">{loginErrors.username}</small>
+                <small className="form-field-error">
+                  {loginErrors.username}
+                </small>
               )}
             </label>
 
@@ -97,33 +101,36 @@ const LoginPage = () => {
               <span className="form-label">Password</span>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (loginErrors.password) setLoginErrors((p) => ({ ...p, password: '' }));
+                    if (loginErrors.password)
+                      setLoginErrors((p) => ({ ...p, password: "" }));
                   }}
                   onBlur={() => loginValidate({ username, password })}
                   disabled={isPending}
                   placeholder="••••••••"
                   aria-invalid={!!loginErrors.password}
-                  className={`form-input pr-14 ${loginErrors.password ? 'form-input-error' : ''}`}
+                  className={`form-input pr-14 ${loginErrors.password ? "form-input-error" : ""}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
                   className="input-toggle-btn"
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
               {loginErrors.password && (
-                <small className="form-field-error">{loginErrors.password}</small>
+                <small className="form-field-error">
+                  {loginErrors.password}
+                </small>
               )}
             </label>
 
             <button disabled={isPending} className="btn-primary mt-1">
-              {isPending ? 'Signing in…' : 'Sign In'}
+              {isPending ? "Signing in…" : "Sign In"}
             </button>
           </form>
 
@@ -136,7 +143,7 @@ const LoginPage = () => {
           <div className="flex justify-center gap-2">
             <button
               type="button"
-              onClick={() => handleSocialLogin('google')}
+              onClick={() => handleSocialLogin("google")}
               className="btn-social"
               aria-label="Continue with Google"
             >
@@ -144,7 +151,7 @@ const LoginPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleSocialLogin('facebook')}
+              onClick={() => handleSocialLogin("facebook")}
               className="btn-social"
               aria-label="Continue with Facebook"
             >
@@ -152,7 +159,7 @@ const LoginPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleSocialLogin('github')}
+              onClick={() => handleSocialLogin("github")}
               className="btn-social"
               aria-label="Continue with GitHub"
             >
@@ -160,7 +167,7 @@ const LoginPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleSocialLogin('apple')}
+              onClick={() => handleSocialLogin("apple")}
               className="btn-social"
               aria-label="Continue with Apple"
             >
@@ -169,8 +176,11 @@ const LoginPage = () => {
           </div>
 
           <p className="auth-footer-text">
-            New here?{' '}
-            <span className="auth-footer-link" onClick={() => navigate('/signup')}>
+            New here?{" "}
+            <span
+              className="auth-footer-link"
+              onClick={() => navigate("/signup")}
+            >
               Create account
             </span>
           </p>

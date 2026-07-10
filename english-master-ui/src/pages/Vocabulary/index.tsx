@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import Layout from '@/layouts/Layout';
-import { createWord, getWords } from '@/service/word';
-import type { WordItem, WordMeaning, WordPage } from '@/service/word';
+import { useState, useEffect } from "react";
+import Layout from "@/layouts/Layout";
+import { createWord, getWords } from "@/service/word";
+import type { WordItem, WordMeaning, WordPage } from "@/service/word";
 
 const PAGE_SIZE = 10;
 
 const Vocabulary = () => {
-  const [word, setWord] = useState('');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [word, setWord] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(0);
   const [data, setData] = useState<WordPage | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,19 +23,21 @@ const Vocabulary = () => {
     return () => clearTimeout(t);
   }, [search]);
 
-  const fetchWords = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getWords({ keyword: debouncedSearch, page, size: PAGE_SIZE });
-      setData(result);
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearch, page, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
-    fetchWords();
-  }, [fetchWords]);
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    getWords({ keyword: debouncedSearch, page, size: PAGE_SIZE })
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, page, refreshKey]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,9 +45,9 @@ const Vocabulary = () => {
     setSubmitting(true);
     try {
       await createWord(word.trim());
-      setWord('');
-      setSearch('');
-      setDebouncedSearch('');
+      setWord("");
+      setSearch("");
+      setDebouncedSearch("");
       setPage(0);
       setRefreshKey((k) => k + 1);
     } finally {
@@ -60,9 +62,11 @@ const Vocabulary = () => {
   return (
     <Layout>
       <div className="h-full flex flex-col px-6 py-4 gap-4 max-w-5xl mx-auto w-full">
-
         {/* Page header */}
-        <h1 className="text-2xl font-bold text-surface-900 shrink-0" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1
+          className="text-2xl font-bold text-surface-900 shrink-0"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           Vocabulary
         </h1>
 
@@ -80,7 +84,10 @@ const Vocabulary = () => {
                          text-sm text-surface-900 placeholder:text-surface-400
                          focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:border-ink-700
                          transition-colors"
-              style={{ fontFamily: 'var(--font-sans)', borderRadius: 'var(--radius-input)' }}
+              style={{
+                fontFamily: "var(--font-sans)",
+                borderRadius: "var(--radius-input)",
+              }}
             />
             <button
               type="submit"
@@ -89,22 +96,32 @@ const Vocabulary = () => {
                          bg-ink-900 text-parchment text-sm font-semibold
                          hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed
                          transition-colors duration-150 cursor-pointer border-none shrink-0"
-              style={{ fontFamily: 'var(--font-sans)', borderRadius: 'var(--radius-btn)' }}
+              style={{
+                fontFamily: "var(--font-sans)",
+                borderRadius: "var(--radius-btn)",
+              }}
             >
-              {submitting
-                ? <><i className="pi pi-spin pi-spinner text-sm" /> Adding…</>
-                : <><i className="pi pi-plus text-sm" /> Add</>
-              }
+              {submitting ? (
+                <>
+                  <i className="pi pi-spin pi-spinner text-sm" /> Adding…
+                </>
+              ) : (
+                <>
+                  <i className="pi pi-plus text-sm" /> Add
+                </>
+              )}
             </button>
           </form>
         </div>
 
         {/* Word list — fills remaining height */}
         <div className="flex-1 flex flex-col min-h-0 gap-3">
-
           {/* Toolbar */}
           <div className="flex items-center justify-between gap-4 shrink-0">
-            <span className="text-sm font-semibold text-surface-700 uppercase tracking-widest" style={{ fontFamily: 'var(--font-sans)' }}>
+            <span
+              className="text-sm font-semibold text-surface-700 uppercase tracking-widest"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
               My words
               {!loading && (
                 <span className="ml-2 font-normal text-surface-400 normal-case tracking-normal">
@@ -124,7 +141,10 @@ const Vocabulary = () => {
                            text-sm text-surface-900 placeholder:text-surface-400 w-52
                            focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:border-ink-700
                            transition-colors"
-                style={{ fontFamily: 'var(--font-sans)', borderRadius: 'var(--radius-input)' }}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  borderRadius: "var(--radius-input)",
+                }}
               />
             </div>
           </div>
@@ -135,23 +155,44 @@ const Vocabulary = () => {
               {loading ? (
                 <div className="h-full flex flex-col items-center justify-center gap-3">
                   <i className="pi pi-spin pi-spinner text-2xl text-surface-400" />
-                  <p className="text-sm text-surface-400" style={{ fontFamily: 'var(--font-sans)' }}>Loading…</p>
+                  <p
+                    className="text-sm text-surface-400"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    Loading…
+                  </p>
                 </div>
               ) : words.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-6">
                   <i className="pi pi-book text-3xl text-surface-300" />
-                  <p className="text-sm font-medium text-surface-500" style={{ fontFamily: 'var(--font-sans)' }}>
-                    {search ? 'No words match your search.' : 'No words yet. Add your first word above!'}
+                  <p
+                    className="text-sm font-medium text-surface-500"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {search
+                      ? "No words match your search."
+                      : "No words yet. Add your first word above!"}
                   </p>
                 </div>
               ) : (
-                <table className="w-full text-sm" style={{ fontFamily: 'var(--font-sans)' }}>
+                <table
+                  className="w-full text-sm"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b border-surface-100 bg-surface-50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-8">#</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Word</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Meanings</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Level</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-8">
+                        #
+                      </th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                        Word
+                      </th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                        Meanings
+                      </th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                        Level
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -160,20 +201,30 @@ const Vocabulary = () => {
                         key={w.id}
                         className="border-b border-surface-100 last:border-0 hover:bg-surface-50 transition-colors"
                       >
-                        <td className="px-5 py-3.5 text-surface-400 text-xs">{page * PAGE_SIZE + idx + 1}</td>
+                        <td className="px-5 py-3.5 text-surface-400 text-xs">
+                          {page * PAGE_SIZE + idx + 1}
+                        </td>
                         <td className="px-5 py-3.5">
-                          <span className="font-semibold text-surface-900" style={{ fontFamily: 'var(--font-display)' }}>
+                          <span
+                            className="font-semibold text-surface-900"
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
                             {w.text}
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex flex-col gap-1">
                             {(w.meanings ?? []).map((m: WordMeaning) => (
-                              <div key={m.id} className="flex items-center gap-2">
+                              <div
+                                key={m.id}
+                                className="flex items-center gap-2"
+                              >
                                 <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize">
                                   {m.partOfSpeech.toLowerCase()}
                                 </span>
-                                <span className="text-sm text-surface-700">{m.meaning}</span>
+                                <span className="text-sm text-surface-700">
+                                  {m.meaning}
+                                </span>
                               </div>
                             ))}
                           </div>
@@ -193,10 +244,10 @@ const Vocabulary = () => {
             {/* Pagination — always visible inside the card */}
             <div
               className="shrink-0 border-t border-surface-100 px-5 py-3 flex items-center justify-between bg-white"
-              style={{ fontFamily: 'var(--font-sans)' }}
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               <p className="text-xs text-surface-400">
-                {totalPages > 0 ? `Page ${page + 1} of ${totalPages}` : ''}
+                {totalPages > 0 ? `Page ${page + 1} of ${totalPages}` : ""}
               </p>
               <div className="flex items-center gap-1">
                 <button
@@ -213,9 +264,10 @@ const Vocabulary = () => {
                     key={i}
                     onClick={() => setPage(i)}
                     className={`w-7 h-7 flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer border
-                      ${i === page
-                        ? 'bg-ink-900 text-parchment border-ink-900'
-                        : 'bg-white text-surface-600 border-surface-200 hover:bg-surface-50'
+                      ${
+                        i === page
+                          ? "bg-ink-900 text-parchment border-ink-900"
+                          : "bg-white text-surface-600 border-surface-200 hover:bg-surface-50"
                       }`}
                   >
                     {i + 1}
@@ -233,7 +285,6 @@ const Vocabulary = () => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </Layout>

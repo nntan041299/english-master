@@ -11,7 +11,7 @@ const PageLoader = () => {
     >
       <span
         className="font-display text-xl font-bold tracking-tight text-parchment mb-2"
-        style={{ fontFamily: 'var(--font-display)' }}
+        style={{ fontFamily: "var(--font-display)" }}
       >
         English <span className="text-gold-500">Master</span>
       </span>

@@ -1,6 +1,6 @@
-import { useRoutes, RouteObject } from 'react-router-dom';
+import { useRoutes, RouteObject } from "react-router-dom";
 
-import routes from './routes';
+import routes from "./routes";
 
 export default function AppRouter() {
   const routesList: RouteObject[] = [];

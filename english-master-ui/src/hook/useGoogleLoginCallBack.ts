@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
-import { getGoogleToken } from '@/service/auth';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthProvider';
+import { useMutation } from "@tanstack/react-query";
+import { getGoogleToken } from "@/service/auth";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthProvider";
 
 export const useGoogleLoginCallBack = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export const useGoogleLoginCallBack = () => {
         tokenType: string;
       };
       addToken(accessToken, refreshToken);
-      navigate('/');
+      navigate("/");
     },
     onError: (error) => {
       console.log(error);

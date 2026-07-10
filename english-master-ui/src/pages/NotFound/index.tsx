@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -8,9 +8,11 @@ export default function NotFound() {
       <div>
         <h1>404</h1>
         <h2>Page not found</h2>
-        <p>Sorry, the page you are looking for do not exist or has been moved.</p>
+        <p>
+          Sorry, the page you are looking for do not exist or has been moved.
+        </p>
 
-        <button onClick={() => navigate('/')}>Go back home</button>
+        <button onClick={() => navigate("/")}>Go back home</button>
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ export const getWords = async (params: {
   if (params.keyword) query.set('keyword', params.keyword);
   query.set('page', String(params.page ?? 0));
   query.set('size', String(params.size ?? 10));
-  query.set('sort', 'id');
+  query.set('sort', 'createdAt,desc');
   const response = await request.get({
     path: `${ENDPOINT.WORDS}?${query.toString()}`,
   });

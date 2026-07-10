@@ -7,6 +7,7 @@ import com.nntan041299.englishmasterservice.word.service.WordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class WordController {
     @GetMapping
     public ResponseEntity<PageResponse<WordResponse>> searchWords(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(PageResponse.from(wordService.searchWords(keyword, pageable)));
     }
 }

@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
-import { login } from '@/service/auth';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthProvider';
+import { useMutation } from "@tanstack/react-query";
+import { login } from "@/service/auth";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthProvider";
 
 export const useLogin = () => {
   const navigate = useNavigate();
@@ -16,10 +16,10 @@ export const useLogin = () => {
         tokenType: string;
       };
       addToken(accessToken, refreshToken);
-      navigate('/');
+      navigate("/");
     },
     onError: (error) => {
-      console.log('Login error:' + error);
+      console.log("Login error:" + error);
     },
   });
 };

@@ -1,4 +1,4 @@
-import { request, ENDPOINT } from '@/rest';
+import { request, ENDPOINT } from "@/rest";
 
 export interface PracticeItem {
   wordId: number;
@@ -11,7 +11,7 @@ export interface PracticeItem {
   option2: string;
   option3: string;
   option4: string;
-  correctAnswer: 'OPTION_1' | 'OPTION_2' | 'OPTION_3' | 'OPTION_4';
+  correctAnswer: "OPTION_1" | "OPTION_2" | "OPTION_3" | "OPTION_4";
 }
 
 export interface AnswerRequest {
@@ -22,7 +22,7 @@ export interface AnswerRequest {
 
 export interface AnswerResponse {
   correct: boolean;
-  correctAnswer: 'OPTION_1' | 'OPTION_2' | 'OPTION_3' | 'OPTION_4';
+  correctAnswer: "OPTION_1" | "OPTION_2" | "OPTION_3" | "OPTION_4";
   newLevel: string;
 }
 
@@ -31,7 +31,12 @@ export const getPractices = async (): Promise<PracticeItem[]> => {
   return response.data.data;
 };
 
-export const answerPractice = async (body: AnswerRequest): Promise<AnswerResponse> => {
-  const response = await request.post({ path: `${ENDPOINT.PRACTICES}/answer`, body });
+export const answerPractice = async (
+  body: AnswerRequest,
+): Promise<AnswerResponse> => {
+  const response = await request.post({
+    path: `${ENDPOINT.PRACTICES}/answer`,
+    body,
+  });
   return response.data.data;
 };

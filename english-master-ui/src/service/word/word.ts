@@ -1,4 +1,4 @@
-import { request, ENDPOINT } from '@/rest';
+import { request, ENDPOINT } from "@/rest";
 
 export interface WordMeaning {
   id: number;
@@ -37,10 +37,10 @@ export const getWords = async (params: {
   size?: number;
 }): Promise<WordPage> => {
   const query = new URLSearchParams();
-  if (params.keyword) query.set('keyword', params.keyword);
-  query.set('page', String(params.page ?? 0));
-  query.set('size', String(params.size ?? 10));
-  query.set('sort', 'createdAt,desc');
+  if (params.keyword) query.set("keyword", params.keyword);
+  query.set("page", String(params.page ?? 0));
+  query.set("size", String(params.size ?? 10));
+  query.set("sort", "createdAt,desc");
   const response = await request.get({
     path: `${ENDPOINT.WORDS}?${query.toString()}`,
   });

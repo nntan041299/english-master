@@ -1,11 +1,11 @@
-import { ReactNode, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import SideBar from '@/components/SideBar';
-import Header from '@/components/Header';
-import { getUserInfo } from '@/service/user';
-import { setUserInfo } from '@/redux/user';
-import { selectUser } from '@/redux/user/selectors';
-import { AppDispatch } from '@/redux/store';
+import { ReactNode, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import SideBar from "@/components/SideBar";
+import Header from "@/components/Header";
+import { getUserInfo } from "@/service/user";
+import { setUserInfo } from "@/redux/user";
+import { selectUser } from "@/redux/user/selectors";
+import { AppDispatch } from "@/redux/store";
 
 interface LayoutProps {
   children: ReactNode;

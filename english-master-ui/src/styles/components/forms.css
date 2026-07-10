@@ -19,7 +19,8 @@
   .form-input:focus {
     @apply bg-white;
     border-color: var(--color-sage-600);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-sage-600) 12%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-sage-600) 12%, transparent);
   }
 
   .form-input:disabled {
@@ -30,12 +31,13 @@
 
   .form-input-error {
     border-color: var(--color-error-400);
-    background: #FFF8F8;
+    background: #fff8f8;
   }
 
   .form-input-error:focus {
     border-color: var(--color-error-500);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error-500) 10%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-error-500) 10%, transparent);
   }
 
   /* ── Field error message ── */

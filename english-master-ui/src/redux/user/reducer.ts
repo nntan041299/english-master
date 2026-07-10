@@ -1,4 +1,4 @@
-import * as actionTypes from './types';
+import * as actionTypes from "./types";
 
 export interface UserState {
   id: string | undefined;
@@ -23,7 +23,10 @@ const INITIAL_STATE: UserState = {
   avatarUrl: undefined,
 };
 
-const userReducer = (state: UserState = INITIAL_STATE, action: UserAction): UserState => {
+const userReducer = (
+  state: UserState = INITIAL_STATE,
+  action: UserAction,
+): UserState => {
   switch (action.type) {
     case actionTypes.USER_INFO_RETRIEVE_SUCCESS:
       return {

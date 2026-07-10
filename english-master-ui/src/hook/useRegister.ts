@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthProvider';
-import { signUp } from '@/service/auth';
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthProvider";
+import { signUp } from "@/service/auth";
 
 export const useRegister = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export const useRegister = () => {
         tokenType: string;
       };
       addToken(accessToken, refreshToken);
-      navigate('/', { state: { fromLogin: true } });
+      navigate("/", { state: { fromLogin: true } });
     },
   });
 };

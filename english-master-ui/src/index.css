@@ -1,6 +1,6 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@import './styles/theme.css';
-@import './styles/base.css';
-@import './styles/components/forms.css';
-@import './styles/components/auth.css';
+@import "./styles/theme.css";
+@import "./styles/base.css";
+@import "./styles/components/forms.css";
+@import "./styles/components/auth.css";

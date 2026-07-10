@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/layouts/Layout';
 import { createWord, getWords } from '@/service/word';
 import type { WordItem, WordMeaning, WordPage } from '@/service/word';
@@ -23,19 +23,15 @@ const Vocabulary = () => {
     return () => clearTimeout(t);
   }, [search]);
 
-  const fetchWords = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getWords({ keyword: debouncedSearch, page, size: PAGE_SIZE });
-      setData(result);
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearch, page, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
-    fetchWords();
-  }, [fetchWords]);
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    getWords({ keyword: debouncedSearch, page, size: PAGE_SIZE })
+      .then((result) => { if (!cancelled) setData(result); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [debouncedSearch, page, refreshKey]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();

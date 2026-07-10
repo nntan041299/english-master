@@ -21,7 +21,7 @@ const Layout = ({ children }: LayoutProps) => {
         dispatch(setUserInfo(res.data.data));
       });
     }
-  }, []);
+  }, [dispatch, id]);
 
   return (
     <div className="flex h-screen overflow-hidden">

@@ -124,7 +124,7 @@ const Dashboard = () => {
               className="text-sm font-semibold text-surface-700 uppercase tracking-widest mb-4"
               style={{ fontFamily: 'var(--font-sans)' }}
             >
-              Today's tasks
+              Today&apos;s tasks
             </h2>
             {TODAY_ITEMS.map((item) => (
               <ActivityRow key={item.label} {...item} />

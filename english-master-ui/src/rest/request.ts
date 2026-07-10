@@ -13,9 +13,11 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 }
 
 interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType?: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    tokenType?: string;
+  };
 }
 
 axios.defaults.baseURL = API_BASE_URL;
@@ -96,13 +98,14 @@ axios.interceptors.response.use(
         refreshToken: storedRefreshToken,
       });
 
-      localStorage.setItem('token', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      setAuthHeader(data.accessToken);
+      const { accessToken, refreshToken } = data.data;
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      setAuthHeader(accessToken);
 
-      resolvePendingRequests(data.accessToken);
+      resolvePendingRequests(accessToken);
 
-      originalRequest.headers.set('Authorization', `Bearer ${data.accessToken}`);
+      originalRequest.headers.set('Authorization', `Bearer ${accessToken}`);
       return axios(originalRequest);
     } catch (refreshError) {
       rejectPendingRequests(refreshError);

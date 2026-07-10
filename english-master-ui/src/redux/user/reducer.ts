@@ -1,3 +1,4 @@
+import { UnknownAction } from "redux";
 import * as actionTypes from "./types";
 
 export interface UserState {
@@ -25,7 +26,7 @@ const INITIAL_STATE: UserState = {
 
 const userReducer = (
   state: UserState = INITIAL_STATE,
-  action: UserAction,
+  action: UserAction | UnknownAction,
 ): UserState => {
   switch (action.type) {
     case actionTypes.USER_INFO_RETRIEVE_SUCCESS:

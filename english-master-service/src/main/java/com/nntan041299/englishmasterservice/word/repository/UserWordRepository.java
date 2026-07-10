@@ -16,9 +16,14 @@ public interface UserWordRepository extends JpaRepository<UserWord, Long> {
     @Query("SELECT uw FROM UserWord uw JOIN FETCH uw.word w JOIN FETCH w.meanings WHERE uw.practicesAssigned = false")
     List<UserWord> findUnassigned();
 
-    @Query("SELECT uw FROM UserWord uw JOIN FETCH uw.word w LEFT JOIN FETCH w.meanings WHERE uw.user.id = :userId")
+    // Step 1: paginate by ID only (no collection fetch — DB does the pagination)
+    @Query("SELECT uw FROM UserWord uw JOIN uw.word w WHERE uw.user.id = :userId")
     Page<UserWord> findByUserId(@Param("userId") Long userId, Pageable pageable);
 
-    @Query("SELECT uw FROM UserWord uw JOIN FETCH uw.word w LEFT JOIN FETCH w.meanings WHERE uw.user.id = :userId AND LOWER(w.text) LIKE %:keyword%")
+    @Query("SELECT uw FROM UserWord uw JOIN uw.word w WHERE uw.user.id = :userId AND LOWER(w.text) LIKE %:keyword%")
     Page<UserWord> findByUserIdAndWordTextContaining(@Param("userId") Long userId, @Param("keyword") String keyword, Pageable pageable);
+
+    // Step 2: fetch meanings for the paginated IDs
+    @Query("SELECT uw FROM UserWord uw JOIN FETCH uw.word w LEFT JOIN FETCH w.meanings WHERE uw.id IN :ids")
+    List<UserWord> findByIdsWithMeanings(@Param("ids") List<Long> ids);
 }

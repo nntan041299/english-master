@@ -1,0 +1,90 @@
+name: Deploy Backend — Production
+
+on:
+  push:
+    tags:
+      - 'backend/v*.*.*'
+
+env:
+  REGISTRY: docker.io
+
+jobs:
+  build-and-push:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Extract artifact ID from pom.xml
+        id: pom
+        working-directory: english-master-service
+        run: |
+          ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+          # backend/v1.2.3 → 1.2.3
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#backend/v}"
+          echo "image_name=${{ secrets.DOCKERHUB_USERNAME }}/${ARTIFACT_ID}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build JAR
+        working-directory: english-master-service
+        run: mvn -B package -DskipTests
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: english-master-service
+          push: true
+          tags: ${{ steps.pom.outputs.image_name }}:${{ steps.pom.outputs.version }}
+
+  bump-version:
+    name: Bump pom.xml version on develop
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Compute next version
+        id: next
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#backend/v}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          echo "snapshot=${MAJOR}.${MINOR}.$((PATCH + 1))-SNAPSHOT" >> $GITHUB_OUTPUT
+
+      - name: Bump pom.xml
+        working-directory: english-master-service
+        run: mvn -B versions:set -DnewVersion="${{ steps.next.outputs.snapshot }}" -DgenerateBackupPoms=false
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add english-master-service/pom.xml
+          git commit -m "chore(backend): bump version to ${{ steps.next.outputs.snapshot }}"
+          git push origin develop

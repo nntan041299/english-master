@@ -10,6 +10,10 @@ import com.nntan041299.englishmasterservice.word.mapper.WordMapper;
 import com.nntan041299.englishmasterservice.word.repository.UserWordRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordRepository;
 import com.nntan041299.englishmasterservice.common.util.StringUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,11 +59,17 @@ public class WordService {
     @Transactional(readOnly = true)
     public Page<WordResponse> searchWords(String keyword, Pageable pageable) {
         User currentUser = currentUserProvider.getCurrentUser();
-        if (keyword == null || keyword.isBlank()) {
-            return userWordRepository.findByUserId(currentUser.getId(), pageable)
-                    .map(wordMapper::toResponse);
-        }
-        return userWordRepository.findByUserIdAndWordTextContaining(currentUser.getId(), keyword.trim().toLowerCase(), pageable)
-                .map(wordMapper::toResponse);
+
+        Page<UserWord> page = (keyword == null || keyword.isBlank())
+                ? userWordRepository.findByUserId(currentUser.getId(), pageable)
+                : userWordRepository.findByUserIdAndWordTextContaining(currentUser.getId(), keyword.trim().toLowerCase(), pageable);
+
+        // Fetch meanings in a single query for the current page only
+        List<Long> ids = page.map(UserWord::getId).toList();
+        Map<Long, UserWord> withMeanings = userWordRepository.findByIdsWithMeanings(ids)
+                .stream()
+                .collect(Collectors.toMap(UserWord::getId, Function.identity()));
+
+        return page.map(uw -> wordMapper.toResponse(withMeanings.getOrDefault(uw.getId(), uw)));
     }
 }

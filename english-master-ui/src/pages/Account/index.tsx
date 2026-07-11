@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useMutation } from "@tanstack/react-query";
 import { selectUser } from "@/redux/user/selectors";
@@ -122,10 +122,10 @@ const Account = () => {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectUser);
 
-  const [profileForm, setProfileForm] = useState<FormState>({
-    fullName: "",
-    email: "",
-  });
+  const [profileForm, setProfileForm] = useState<FormState>(() => ({
+    fullName: [user.firstName, user.lastName].filter(Boolean).join(" "),
+    email: user.email ?? "",
+  }));
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
 
@@ -136,11 +136,6 @@ const Account = () => {
   });
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
-
-  useEffect(() => {
-    const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
-    setProfileForm({ fullName, email: user.email ?? "" });
-  }, [user.firstName, user.lastName, user.email]);
 
   const { mutate: saveProfile, isPending: savingProfile } = useMutation({
     mutationFn: updateUserInfo,

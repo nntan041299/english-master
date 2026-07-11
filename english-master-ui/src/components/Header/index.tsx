@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { selectUser } from "@/redux/user/selectors";
 import { useClickOutside } from "@/hook/useClickOutside";
 
@@ -11,6 +12,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const { firstName, lastName, avatarUrl } = useSelector(selectUser);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useClickOutside(dropdownRef, () => setOpen(false));
 
@@ -22,6 +24,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         : "?";
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "User";
+
+  const handleAccount = () => {
+    setOpen(false);
+    navigate("/account");
+  };
 
   return (
     <header className="h-14 bg-white border-b border-surface-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
@@ -60,7 +67,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-surface-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-52 bg-white border border-surface-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
             <div className="px-4 py-3 border-b border-surface-100">
               <p
                 className="text-sm font-semibold text-surface-900 truncate"
@@ -68,6 +75,17 @@ export default function Header({ onMenuToggle }: HeaderProps) {
               >
                 {fullName}
               </p>
+            </div>
+            <div className="py-1">
+              <button
+                onClick={handleAccount}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-surface-700
+                           hover:bg-surface-50 transition-colors duration-150 cursor-pointer text-left"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                <i className="pi pi-user text-sm text-surface-400" />
+                Account settings
+              </button>
             </div>
           </div>
         )}

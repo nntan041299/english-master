@@ -19,7 +19,18 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     if (!id) {
       getUserInfo().then((res) => {
-        dispatch(setUserInfo(res.data.data));
+        const data = res.data.data;
+        const parts = (data.fullName ?? "").trim().split(/\s+/);
+        dispatch(
+          setUserInfo({
+            id: String(data.id),
+            username: data.username,
+            email: data.email,
+            firstName: parts[0] ?? "",
+            lastName: parts.slice(1).join(" ") || undefined,
+            avatarUrl: data.avatarUrl,
+          }),
+        );
       });
     }
   }, [dispatch, id]);

@@ -59,7 +59,10 @@ function Field({
       </label>
       {children}
       {error && (
-        <p className="text-xs text-red-500" style={{ fontFamily: "var(--font-sans)" }}>
+        <p
+          className="text-xs text-red-500"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
           {error}
         </p>
       )}
@@ -163,7 +166,11 @@ const Account = () => {
   const { mutate: savePassword, isPending: savingPassword } = useMutation({
     mutationFn: updateUserInfo,
     onSuccess: () => {
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       setPasswordSuccess("Password changed successfully.");
       setTimeout(() => setPasswordSuccess(""), 3000);
     },
@@ -218,7 +225,8 @@ const Account = () => {
     });
   };
 
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "User";
+  const fullName =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || "User";
   const initials =
     user.firstName && user.lastName
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -253,7 +261,11 @@ const Account = () => {
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+              <img
+                src={user.avatarUrl}
+                alt="avatar"
+                className="w-full h-full object-cover"
+              />
             ) : (
               initials
             )}
@@ -296,12 +308,18 @@ const Account = () => {
             </Field>
 
             {profileError && (
-              <p className="text-sm text-red-500" style={{ fontFamily: "var(--font-sans)" }}>
+              <p
+                className="text-sm text-red-500"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
                 {profileError}
               </p>
             )}
             {profileSuccess && (
-              <p className="text-sm text-sage-600" style={{ fontFamily: "var(--font-sans)" }}>
+              <p
+                className="text-sm text-sage-600"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
                 {profileSuccess}
               </p>
             )}
@@ -350,12 +368,18 @@ const Account = () => {
             </Field>
 
             {passwordError && (
-              <p className="text-sm text-red-500" style={{ fontFamily: "var(--font-sans)" }}>
+              <p
+                className="text-sm text-red-500"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
                 {passwordError}
               </p>
             )}
             {passwordSuccess && (
-              <p className="text-sm text-sage-600" style={{ fontFamily: "var(--font-sans)" }}>
+              <p
+                className="text-sm text-sage-600"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
                 {passwordSuccess}
               </p>
             )}

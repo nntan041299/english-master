@@ -12,5 +12,8 @@ export interface UpdateUserPayload {
 }
 
 export const updateUserInfo = async (payload: UpdateUserPayload) => {
-  return request.put({ path: ENDPOINT.USERS, body: payload as Record<string, unknown> });
+  return request.put({
+    path: ENDPOINT.USERS,
+    body: payload as Record<string, unknown>,
+  });
 };

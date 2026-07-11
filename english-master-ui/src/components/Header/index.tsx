@@ -3,7 +3,11 @@ import { useSelector } from "react-redux";
 import { selectUser } from "@/redux/user/selectors";
 import { useClickOutside } from "@/hook/useClickOutside";
 
-export default function Header() {
+interface HeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export default function Header({ onMenuToggle }: HeaderProps) {
   const { firstName, lastName, avatarUrl } = useSelector(selectUser);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -20,7 +24,20 @@ export default function Header() {
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "User";
 
   return (
-    <header className="h-14 bg-white border-b border-surface-200 flex items-center justify-end px-6 flex-shrink-0">
+    <header className="h-14 bg-white border-b border-surface-200 flex items-center justify-between px-4 md:px-6 flex-shrink-0">
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuToggle}
+        className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg text-surface-600
+                   hover:bg-surface-100 transition-colors duration-150 cursor-pointer focus:outline-none"
+        aria-label="Open menu"
+      >
+        <i className="pi pi-bars text-base" />
+      </button>
+
+      {/* Spacer so avatar stays right on desktop */}
+      <div className="hidden md:block flex-1" />
+
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setOpen((prev) => !prev)}

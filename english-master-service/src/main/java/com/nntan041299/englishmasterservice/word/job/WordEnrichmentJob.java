@@ -65,7 +65,7 @@ public class WordEnrichmentJob {
         Map<String, Word> wordMap = words.stream().collect(Collectors.toMap(Word::getText, w -> w));
 
         List<MeaningAiResponse> validMeanings = Arrays.stream(responseMeanings)
-                .map(dto -> new MeaningAiResponse(dto.word().toLowerCase(), dto.partOfSpeech(), dto.meaning()))
+                .map(dto -> new MeaningAiResponse(dto.word().toLowerCase(), dto.partOfSpeech(), dto.meaning(), dto.ipa()))
                 .filter(dto -> {
                     boolean found = wordMap.containsKey(dto.word());
                     if (!found) log.warn("word_enrichment_job unknown_word word={}", dto.word());

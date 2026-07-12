@@ -12,6 +12,12 @@ english-master/
 └── english-master-ui/        # React frontend
 ```
 
+## Authentication
+To use the application, the user need to login first.
+With local:
+- Username: nntan041299@gmail.com
+- Password: 123123123
+
 ---
 
 ## Backend — `english-master-service`

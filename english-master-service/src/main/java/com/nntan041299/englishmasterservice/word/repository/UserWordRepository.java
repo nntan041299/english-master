@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface UserWordRepository extends JpaRepository<UserWord, Long> {
 
+    long countByUserId(Long userId);
+
     Optional<UserWord> findByUserIdAndWordId(Long userId, Long wordId);
 
     @Query("SELECT uw FROM UserWord uw JOIN FETCH uw.word w JOIN FETCH w.meanings WHERE uw.practicesAssigned = false")

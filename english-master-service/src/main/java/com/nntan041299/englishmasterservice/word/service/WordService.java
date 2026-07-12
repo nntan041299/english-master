@@ -2,6 +2,7 @@ package com.nntan041299.englishmasterservice.word.service;
 
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
+import com.nntan041299.englishmasterservice.word.dto.DashboardResponse;
 import com.nntan041299.englishmasterservice.word.dto.SaveWordRequest;
 import com.nntan041299.englishmasterservice.word.dto.WordResponse;
 import com.nntan041299.englishmasterservice.word.entity.LearningLevel;
@@ -9,6 +10,7 @@ import com.nntan041299.englishmasterservice.word.entity.UserWord;
 import com.nntan041299.englishmasterservice.word.entity.Word;
 import com.nntan041299.englishmasterservice.word.mapper.WordMapper;
 import com.nntan041299.englishmasterservice.word.repository.UserPracticeRepository;
+import com.nntan041299.englishmasterservice.word.repository.UserPracticeResultRepository;
 import com.nntan041299.englishmasterservice.word.repository.UserWordRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordAvgPoint;
@@ -29,6 +31,7 @@ public class WordService {
     private final WordRepository wordRepository;
     private final UserWordRepository userWordRepository;
     private final UserPracticeRepository userPracticeRepository;
+    private final UserPracticeResultRepository userPracticeResultRepository;
     private final WordMapper wordMapper;
     private final CurrentUserProvider currentUserProvider;
 
@@ -85,5 +88,44 @@ public class WordService {
             double avgPoint = avgPointByWordId.getOrDefault(resolved.getWord().getId(), 0.0);
             return wordMapper.toResponse(resolved, LearningLevel.fromAveragePoint(avgPoint));
         });
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardResponse getDashboard() {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Long userId = currentUser.getId();
+
+        long totalWords = userWordRepository.countByUserId(userId);
+
+        Map<Long, Double> avgPointByWordId = userPracticeRepository.findAvgPointByUserId(userId)
+                .stream()
+                .collect(Collectors.toMap(WordAvgPoint::getWordId, WordAvgPoint::getAvgPoint));
+
+        long newWords = 0, learningWords = 0, familiarWords = 0, masteredWords = 0;
+
+        for (double avgPoint : avgPointByWordId.values()) {
+            LearningLevel level = LearningLevel.fromAveragePoint(avgPoint);
+            switch (level) {
+                case NEW                      -> newWords++;
+                case LEVEL_1, LEVEL_2, LEVEL_3 -> learningWords++;
+                case LEVEL_4, LEVEL_5         -> familiarWords++;
+                case MASTERED                 -> masteredWords++;
+            }
+        }
+
+        // Words with no practice entry yet are all NEW
+        long wordsWithPractice = avgPointByWordId.size();
+        newWords += (totalWords - wordsWithPractice);
+
+        long practicesDone = userPracticeResultRepository.countByUserId(userId);
+
+        return DashboardResponse.builder()
+                .totalWords(totalWords)
+                .newWords(newWords)
+                .learningWords(learningWords)
+                .familiarWords(familiarWords)
+                .masteredWords(masteredWords)
+                .practicesDone(practicesDone)
+                .build();
     }
 }

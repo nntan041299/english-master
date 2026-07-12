@@ -1,6 +1,7 @@
 package com.nntan041299.englishmasterservice.word.controller;
 
 import com.nntan041299.englishmasterservice.common.dto.PageResponse;
+import com.nntan041299.englishmasterservice.word.dto.DashboardResponse;
 import com.nntan041299.englishmasterservice.word.dto.SaveWordRequest;
 import com.nntan041299.englishmasterservice.word.dto.WordResponse;
 import com.nntan041299.englishmasterservice.word.service.WordService;
@@ -28,6 +29,11 @@ public class WordController {
     @PostMapping
     public ResponseEntity<WordResponse> saveWord(@Valid @RequestBody SaveWordRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(wordService.saveWord(request));
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<DashboardResponse> getDashboard() {
+        return ResponseEntity.ok(wordService.getDashboard());
     }
 
     @GetMapping

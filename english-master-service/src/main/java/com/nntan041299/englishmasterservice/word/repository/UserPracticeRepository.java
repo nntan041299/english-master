@@ -23,6 +23,16 @@ public interface UserPracticeRepository extends JpaRepository<UserPractice, Long
     List<WordAvgPoint> findAvgPointByUserIdAndWordIds(@Param("userId") Long userId, @Param("wordIds") List<Long> wordIds);
 
     @Query("""
+            SELECT m.word.id AS wordId, AVG(up.learningTracking) AS avgPoint
+            FROM UserPractice up
+            JOIN up.practice p
+            JOIN p.meaning m
+            WHERE up.user.id = :userId
+            GROUP BY m.word.id
+            """)
+    List<WordAvgPoint> findAvgPointByUserId(@Param("userId") Long userId);
+
+    @Query("""
             SELECT up FROM UserPractice up
             JOIN FETCH up.practice p
             JOIN FETCH p.meaning m

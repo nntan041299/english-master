@@ -63,7 +63,7 @@
   --color-primary-900: var(--color-amber-900);
 
   /* ── Typography ── */
-  --font-display: "Playfair Display", serif;
+  --font-display: "Inter", sans-serif;
   --font-sans: "Inter", sans-serif;
   --font-brand: "Quicksand", sans-serif;
 

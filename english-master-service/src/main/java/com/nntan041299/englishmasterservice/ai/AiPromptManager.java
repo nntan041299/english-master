@@ -2,6 +2,8 @@ package com.nntan041299.englishmasterservice.ai;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Properties;
@@ -33,9 +35,10 @@ public class AiPromptManager {
 
     private Properties loadProperties(ResourceLoader resourceLoader) {
         Resource resource = resourceLoader.getResource(PROMPT_FILE);
-        try (InputStream inputStream = resource.getInputStream()) {
+        try (InputStream inputStream = resource.getInputStream();
+             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
             Properties properties = new Properties();
-            properties.load(inputStream);
+            properties.load(reader);
             return properties;
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to load AI prompt file: " + PROMPT_FILE, ex);

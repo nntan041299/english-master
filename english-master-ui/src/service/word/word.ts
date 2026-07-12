@@ -4,12 +4,13 @@ export interface WordMeaning {
   id: number;
   partOfSpeech: string;
   meaning: string;
+  ipa?: string;
 }
 
 export interface WordItem {
   id: number;
   text: string;
-  level: string;
+  learningLevel: string;
   meanings: WordMeaning[];
 }
 

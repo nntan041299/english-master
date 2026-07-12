@@ -4,6 +4,7 @@ import * as actionTypes from "./types";
 export interface UserState {
   id: string | undefined;
   username: string | undefined;
+  email: string | undefined;
   firstName: string | undefined;
   lastName: string | undefined;
   avatarUrl: string | undefined;
@@ -19,6 +20,7 @@ type UserAction = UserInfoRetrieveSuccessAction;
 const INITIAL_STATE: UserState = {
   id: undefined,
   username: undefined,
+  email: undefined,
   firstName: undefined,
   lastName: undefined,
   avatarUrl: undefined,
@@ -29,14 +31,17 @@ const userReducer = (
   action: UserAction | UnknownAction,
 ): UserState => {
   switch (action.type) {
-    case actionTypes.USER_INFO_RETRIEVE_SUCCESS:
+    case actionTypes.USER_INFO_RETRIEVE_SUCCESS: {
+      const { payload } = action as UserInfoRetrieveSuccessAction;
       return {
-        id: action.payload.id,
-        username: action.payload.username,
-        firstName: action.payload.firstName,
-        lastName: action.payload.lastName,
-        avatarUrl: action.payload.avatarUrl,
+        id: payload.id,
+        username: payload.username,
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        avatarUrl: payload.avatarUrl,
       };
+    }
     default:
       return state;
   }

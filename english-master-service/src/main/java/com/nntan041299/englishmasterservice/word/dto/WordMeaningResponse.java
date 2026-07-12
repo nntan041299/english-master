@@ -11,4 +11,5 @@ public class WordMeaningResponse {
     private Long id;
     private PartOfSpeech partOfSpeech;
     private String meaning;
+    private String ipa;
 }

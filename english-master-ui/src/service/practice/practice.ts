@@ -3,7 +3,7 @@ import { request, ENDPOINT } from "@/rest";
 export interface PracticeItem {
   wordId: number;
   word: string;
-  level: string;
+  learningTracking: string;
   practiceId: number;
   partOfSpeech: string;
   meaning: string;
@@ -23,7 +23,7 @@ export interface AnswerRequest {
 export interface AnswerResponse {
   correct: boolean;
   correctAnswer: "OPTION_1" | "OPTION_2" | "OPTION_3" | "OPTION_4";
-  newLevel: string;
+  newLearningTracking: string;
 }
 
 export const getPractices = async (): Promise<PracticeItem[]> => {

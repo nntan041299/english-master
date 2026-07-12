@@ -6,6 +6,7 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Vocabulary = lazy(() => import("@/pages/Vocabulary"));
 const Practice = lazy(() => import("@/pages/Practice"));
+const Account = lazy(() => import("@/pages/Account"));
 
 const routes: Record<string, RouteObject[]> = {
   default: [
@@ -20,6 +21,10 @@ const routes: Record<string, RouteObject[]> = {
     {
       path: "/practice",
       element: <Practice />,
+    },
+    {
+      path: "/account",
+      element: <Account />,
     },
     {
       path: "*",

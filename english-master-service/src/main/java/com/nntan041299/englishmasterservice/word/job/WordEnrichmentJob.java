@@ -93,6 +93,7 @@ public class WordEnrichmentJob {
                         .word(wordMap.get(dto.word()))
                         .partOfSpeech(parsePartOfSpeech(dto.partOfSpeech()))
                         .meaning(StringUtils.capitalizeFirst(dto.meaning()))
+                        .ipa(dto.ipa())
                         .build())
                 .toList();
 

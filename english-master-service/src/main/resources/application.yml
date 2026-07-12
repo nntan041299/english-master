@@ -84,10 +84,10 @@ gemini:
 
 word:
   enrichment:
-    cron: ${WORD_ENRICHMENT_CRON:0 */1 * * * *}
+    cron: ${WORD_ENRICHMENT_CRON:*/5 * * * * *}
   meaning:
     practice:
-      cron: ${WORD_MEANING_PRACTICE_CRON:0 */1 * * * *}
+      cron: ${WORD_MEANING_PRACTICE_CRON:*/5 * * * * *}
   practice:
     assignment:
-      cron: ${WORD_PRACTICE_ASSIGNMENT_CRON:0 */1 * * * *}
+      cron: ${WORD_PRACTICE_ASSIGNMENT_CRON:*/5 * * * * *}

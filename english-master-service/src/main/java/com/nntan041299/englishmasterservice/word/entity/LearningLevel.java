@@ -4,28 +4,39 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * A user's mastery level for a given word, progressing as they practice it.
- * Each level defines how long the user should wait before the word needs
- * to be practiced again:
+ * Aggregate learning level for a word, derived from the average point
+ * of all UserPractice tracking levels across the word's meanings.
  *
  * <ul>
- *     <li>{@link #TRACKING1} - review after 1 day</li>
- *     <li>{@link #TRACKING2} - review after 3 days</li>
- *     <li>{@link #TRACKING3} - review after 1 week</li>
- *     <li>{@link #TRACKING4} - review after 1 month</li>
- *     <li>{@link #TRACKING5} - review after 4 months</li>
- *     <li>{@link #FINISH} - finish</li>
+ *     <li>{@link #NEW}         - avg point 0   (no practice yet)</li>
+ *     <li>{@link #LEVEL_1}     - avg point 1</li>
+ *     <li>{@link #LEVEL_2}     - avg point 2</li>
+ *     <li>{@link #LEVEL_3}     - avg point 3</li>
+ *     <li>{@link #LEVEL_4}     - avg point 4</li>
+ *     <li>{@link #LEVEL_5}     - avg point 5</li>
+ *     <li>{@link #MASTERED}    - avg point 6</li>
  * </ul>
  */
 @AllArgsConstructor
 @Getter
 public enum LearningLevel {
-    TRACKING1(1),
-    TRACKING2(3),
-    TRACKING3(7),
-    TRACKING4(30),
-    TRACKING5(120),
-    FINISH(0);
+    NEW(0),
+    LEVEL_1(1),
+    LEVEL_2(2),
+    LEVEL_3(3),
+    LEVEL_4(4),
+    LEVEL_5(5),
+    MASTERED(6);
 
-    private final int daysInterval;
+    private final int point;
+
+    public static LearningLevel fromAveragePoint(double avgPoint) {
+        LearningLevel result = NEW;
+        for (LearningLevel level : values()) {
+            if (avgPoint >= level.point) {
+                result = level;
+            }
+        }
+        return result;
+    }
 }

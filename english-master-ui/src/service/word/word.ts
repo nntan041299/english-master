@@ -10,7 +10,7 @@ export interface WordMeaning {
 export interface WordItem {
   id: number;
   text: string;
-  level: string;
+  learningLevel: string;
   meanings: WordMeaning[];
 }
 

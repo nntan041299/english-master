@@ -32,14 +32,10 @@ public class PracticeService {
         Long userId = currentUserProvider.getCurrentUser().getId();
         LocalDateTime now = LocalDateTime.now();
 
-        return userPracticeRepository.findDueByUserId(
-                        userId,
-                        now.minusDays(LearningTracking.TRACKING1.getDaysInterval()),
-                        now.minusDays(LearningTracking.TRACKING2.getDaysInterval()),
-                        now.minusDays(LearningTracking.TRACKING3.getDaysInterval()),
-                        now.minusDays(LearningTracking.TRACKING4.getDaysInterval()),
-                        now.minusDays(LearningTracking.TRACKING5.getDaysInterval()))
+        return userPracticeRepository.findActiveByUserId(userId, LearningTracking.FINISH)
                 .stream()
+                .filter(up -> up.getLastPracticedAt() == null ||
+                        up.getLastPracticedAt().isBefore(now.minusDays(up.getLearningTracking().getDaysInterval())))
                 .map(userPractice -> {
                     Practice practice = userPractice.getPractice();
                     Meaning meaning = practice.getMeaning();

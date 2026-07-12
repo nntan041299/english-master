@@ -191,7 +191,7 @@ const Vocabulary = () => {
                         Meanings
                       </th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                        Level
+                        Learning Level
                       </th>
                     </tr>
                   </thead>
@@ -236,7 +236,7 @@ const Vocabulary = () => {
                         </td>
                         <td className="px-5 py-3.5">
                           <span className="text-xs font-medium text-surface-500 bg-surface-100 px-2 py-0.5 rounded-full">
-                            {w.level}
+                            {w.learningLevel}
                           </span>
                         </td>
                       </tr>

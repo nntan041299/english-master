@@ -20,12 +20,13 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum LearningTracking {
-    TRACKING1(1),
-    TRACKING2(3),
-    TRACKING3(7),
-    TRACKING4(30),
-    TRACKING5(120),
-    FINISH(0);
+    TRACKING1(1, 1),
+    TRACKING2(3, 2),
+    TRACKING3(7, 3),
+    TRACKING4(30, 4),
+    TRACKING5(120, 5),
+    FINISH(0, 6);
 
     private final int daysInterval;
+    private final int point;
 }

@@ -4,6 +4,7 @@ export interface WordMeaning {
   id: number;
   partOfSpeech: string;
   meaning: string;
+  ipa?: string;
 }
 
 export interface WordItem {

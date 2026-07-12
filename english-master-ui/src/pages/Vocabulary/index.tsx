@@ -173,6 +173,9 @@ const Vocabulary = () => {
                                 <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize">
                                   {m.partOfSpeech.toLowerCase()}
                                 </span>
+                                {m.ipa && (
+                                  <span className="text-xs text-surface-400 font-mono">{m.ipa}</span>
+                                )}
                                 <span className="text-sm text-surface-700">{m.meaning}</span>
                               </div>
                             ))}

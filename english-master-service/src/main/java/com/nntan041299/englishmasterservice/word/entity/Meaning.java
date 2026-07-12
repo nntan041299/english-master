@@ -42,4 +42,7 @@ public class Meaning extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String meaning;
 
+    @Column(length = 100)
+    private String ipa;
+
 }

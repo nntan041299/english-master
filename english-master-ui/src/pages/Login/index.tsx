@@ -46,7 +46,10 @@ const LoginPage = () => {
     if (provider === "google") window.location.href = getGoogleLoginUrl();
   }
 
-  const apiError = error as AxiosError<{ data: string }> | null;
+  const apiError = error as AxiosError<{
+    status: number;
+    message: string;
+  }> | null;
 
   return (
     <div className="auth-screen">
@@ -68,7 +71,7 @@ const LoginPage = () => {
 
           {isError && (
             <div className="alert-error mb-4">
-              {apiError?.response?.data?.data ||
+              {apiError?.response?.data?.message ||
                 "Server error, try again later"}
             </div>
           )}

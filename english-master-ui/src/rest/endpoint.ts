@@ -7,5 +7,6 @@ export const ENDPOINT = {
   SIGN_OUT: "english-master-service/api/auth/logout",
   REFRESH_TOKEN: "english-master-service/api/auth/refresh",
   WORDS: "english-master-service/api/words",
+  WORDS_DASHBOARD: "english-master-service/api/words/dashboard",
   PRACTICES: "english-master-service/api/practices",
 } as const;

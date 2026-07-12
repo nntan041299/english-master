@@ -1,108 +1,57 @@
+import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { selectUser } from "@/redux/user/selectors";
 import Layout from "@/layouts/Layout";
+import { createWord, getDashboard } from "@/service/word";
 
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  icon: string;
-  accent: string;
-  sub?: string;
-}
+const LEVELS = ["NEW", "LEARNING", "FAMILIAR", "MASTERED"] as const;
+type Level = (typeof LEVELS)[number];
 
-function StatCard({ label, value, icon, accent, sub }: StatCardProps) {
-  return (
-    <div className="bg-white rounded-2xl p-5 border border-surface-200 flex flex-col gap-3">
-      <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center ${accent}`}
-      >
-        <i className={`pi ${icon} text-base`} />
-      </div>
-      <div>
-        <p
-          className="text-2xl font-bold text-surface-900"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {value}
-        </p>
-        <p
-          className="text-sm font-medium text-surface-500 mt-0.5"
-          style={{ fontFamily: "var(--font-sans)" }}
-        >
-          {label}
-        </p>
-        {sub && (
-          <p
-            className="text-xs text-surface-400 mt-1"
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            {sub}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface ActivityRowProps {
-  label: string;
-  done: boolean;
-}
-
-function ActivityRow({ label, done }: ActivityRowProps) {
-  return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-surface-100 last:border-0">
-      <span
-        className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs
-        ${done ? "bg-sage-100 text-sage-700" : "bg-surface-100 text-surface-400"}`}
-      >
-        <i className={`pi ${done ? "pi-check" : "pi-circle"} text-[10px]`} />
-      </span>
-      <span
-        className="text-sm text-surface-600"
-        style={{ fontFamily: "var(--font-sans)" }}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
-
-const STATS: StatCardProps[] = [
-  {
-    label: "Words learned",
-    value: "—",
-    icon: "pi-book",
-    accent: "bg-sage-100 text-sage-700",
+const LEVEL_CONFIG: Record<
+  Level,
+  { label: string; bar: string; dot: string; text: string; bg: string }
+> = {
+  NEW: {
+    label: "New",
+    bar: "bg-surface-300",
+    dot: "bg-surface-400",
+    text: "text-surface-500",
+    bg: "bg-surface-50",
   },
-  {
+  LEARNING: {
+    label: "Learning",
+    bar: "bg-indigo-400",
+    dot: "bg-indigo-400",
+    text: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
+  FAMILIAR: {
+    label: "Familiar",
+    bar: "bg-gold-400",
+    dot: "bg-gold-400",
+    text: "text-gold-600",
+    bg: "bg-gold-50",
+  },
+  MASTERED: {
     label: "Mastered",
-    value: "—",
-    icon: "pi-star",
-    accent: "bg-gold-100 text-gold-600",
+    bar: "bg-sage-500",
+    dot: "bg-sage-500",
+    text: "text-sage-700",
+    bg: "bg-sage-50",
   },
-  {
-    label: "Need review",
-    value: "—",
-    icon: "pi-sync",
-    accent: "bg-amber-50 text-amber-600",
-  },
-  {
-    label: "Day streak",
-    value: "—",
-    icon: "pi-bolt",
-    accent: "bg-ink-900/8 text-ink-900",
-  },
-];
-
-const TODAY_ITEMS = [
-  { label: "Complete daily review session", done: false },
-  { label: "Practice 10 new words", done: false },
-  { label: "Run a multiple-choice exercise", done: false },
-];
+};
 
 const Dashboard = () => {
   const { firstName } = useSelector(selectUser);
+  const [word, setWord] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const queryClient = useQueryClient();
+  const { data: stats, isLoading: loadingChart } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: getDashboard,
+  });
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -111,120 +60,262 @@ const Dashboard = () => {
     return "Good evening";
   })();
 
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = word.trim();
+    if (!trimmed) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      await createWord(trimmed);
+      setWord("");
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    } catch {
+      setSubmitError("Couldn't add that word. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const levelValues: Record<Level, number> = {
+    NEW: stats?.newWords ?? 0,
+    LEARNING: stats?.learningWords ?? 0,
+    FAMILIAR: stats?.familiarWords ?? 0,
+    MASTERED: stats?.masteredWords ?? 0,
+  };
+  const chartTotal = stats ? LEVELS.reduce((s, l) => s + levelValues[l], 0) : 0;
+
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* Welcome banner */}
-        <div className="bg-ink-900 rounded-2xl px-7 py-6 flex items-center justify-between overflow-hidden relative">
-          {/* Subtle ambient glow */}
-          <div
-            className="absolute right-0 top-0 w-64 h-full opacity-20"
-            style={{
-              background:
-                "radial-gradient(ellipse at right, var(--color-gold-500), transparent 70%)",
-            }}
-          />
-
-          <div className="relative">
+        {/* Greeting */}
+        <div className="flex items-center justify-between">
+          <div>
             <p
-              className="text-sm font-medium text-white/50 mb-1"
+              className="text-xs font-medium text-surface-400 uppercase tracking-widest mb-0.5"
               style={{ fontFamily: "var(--font-sans)" }}
             >
               {greeting}
             </p>
             <h1
-              className="text-2xl font-bold text-white"
+              className="text-2xl font-bold text-surface-900"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+              {firstName || "Welcome back"}
             </h1>
-            <p
-              className="text-sm text-white/50 mt-1"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Keep building your vocabulary — every word counts.
-            </p>
           </div>
-
-          <div className="relative flex-shrink-0 text-center px-4">
-            <p
-              className="text-3xl font-bold text-gold-400"
-              style={{ fontFamily: "var(--font-display)" }}
+          <div className="flex items-center gap-2 bg-surface-50 border border-surface-200 rounded-xl px-4 py-2.5">
+            <i className="pi pi-bolt text-gold-500 text-sm" />
+            <span
+              className="text-sm font-semibold text-surface-900"
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               0
-            </p>
-            <p
-              className="text-xs font-medium text-white/40 uppercase tracking-widest mt-0.5"
+            </span>
+            <span
+              className="text-xs text-surface-400 font-medium"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              Day streak
-            </p>
+              day streak
+            </span>
           </div>
         </div>
 
-        {/* Stat cards */}
+        {/* Add word — split-pill input */}
+        <form onSubmit={handleAdd}>
+          <div
+            className="flex items-stretch bg-white border-2 border-surface-200 rounded-2xl
+                        overflow-hidden focus-within:border-ink-900 transition-colors duration-200"
+          >
+            <div className="flex items-center pl-5 pr-2 shrink-0">
+              <i className="pi pi-plus-circle text-surface-300 text-lg" />
+            </div>
+            <input
+              type="text"
+              value={word}
+              onChange={(e) => {
+                setWord(e.target.value);
+                setSubmitError("");
+              }}
+              placeholder="Add a word — e.g. serendipity"
+              autoComplete="off"
+              className="flex-1 py-4 text-lg text-surface-900 placeholder:text-surface-300
+                         bg-transparent focus:outline-none"
+              style={{ fontFamily: "var(--font-display)" }}
+            />
+            <div className="p-2 shrink-0">
+              <button
+                type="submit"
+                disabled={submitting || !word.trim()}
+                className="h-full px-5 rounded-xl bg-ink-900 text-parchment text-sm font-semibold
+                           hover:bg-ink-800 disabled:opacity-30 disabled:cursor-not-allowed
+                           transition-colors duration-150 cursor-pointer border-none"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {submitting ? (
+                  <i className="pi pi-spin pi-spinner text-sm" />
+                ) : (
+                  "Add"
+                )}
+              </button>
+            </div>
+          </div>
+          {submitError && (
+            <p
+              className="text-xs text-red-500 mt-2 pl-1"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              {submitError}
+            </p>
+          )}
+        </form>
+
+        {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {STATS.map((s) => (
-            <StatCard key={s.label} {...s} />
+          {[
+            {
+              label: "Total words",
+              value: stats?.totalWords ?? "—",
+              icon: "pi-book",
+              accent: "bg-surface-100 text-surface-600",
+            },
+            {
+              label: "Mastered",
+              value: stats?.masteredWords ?? "—",
+              icon: "pi-star",
+              accent: "bg-sage-100 text-sage-700",
+            },
+            {
+              label: "Learning",
+              value: stats ? stats.learningWords + stats.familiarWords : "—",
+              icon: "pi-sync",
+              accent: "bg-indigo-50 text-indigo-600",
+            },
+            {
+              label: "New",
+              value: stats?.newWords ?? "—",
+              icon: "pi-sparkles",
+              accent: "bg-gold-100 text-gold-600",
+            },
+          ].map(({ label, value, icon, accent }) => (
+            <div
+              key={label}
+              className="bg-white rounded-2xl p-5 border border-surface-200 flex flex-col gap-3"
+            >
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent}`}
+              >
+                <i className={`pi ${icon} text-sm`} />
+              </div>
+              <div>
+                <p
+                  className="text-2xl font-bold text-surface-900"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {loadingChart ? (
+                    <span className="text-surface-300">—</span>
+                  ) : (
+                    value
+                  )}
+                </p>
+                <p
+                  className="text-xs font-medium text-surface-500 mt-0.5 uppercase tracking-wider"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  {label}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Bottom row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Today's tasks */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-surface-200">
+        {/* Progress chart */}
+        <div className="bg-white rounded-2xl border border-surface-200 p-6">
+          <div className="flex items-center justify-between mb-5">
             <h2
-              className="text-sm font-semibold text-surface-700 uppercase tracking-widest mb-4"
+              className="text-sm font-semibold text-surface-700"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              Today&apos;s tasks
+              Vocabulary progress
             </h2>
-            {TODAY_ITEMS.map((item) => (
-              <ActivityRow key={item.label} {...item} />
-            ))}
+            {stats && (
+              <span
+                className="text-xs text-surface-400"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {stats.totalWords} word{stats.totalWords !== 1 ? "s" : ""} total
+              </span>
+            )}
           </div>
 
-          {/* Quick actions */}
-          <div className="bg-white rounded-2xl p-5 border border-surface-200 flex flex-col gap-3">
-            <h2
-              className="text-sm font-semibold text-surface-700 uppercase tracking-widest"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Quick start
-            </h2>
+          {loadingChart ? (
+            <div className="h-20 flex items-center justify-center">
+              <i className="pi pi-spin pi-spinner text-surface-300 text-xl" />
+            </div>
+          ) : !stats || chartTotal === 0 ? (
+            <div className="h-20 flex flex-col items-center justify-center gap-2">
+              <p
+                className="text-sm text-surface-400"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                Add your first word to see progress here.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Stacked bar */}
+              <div className="flex h-6 rounded-lg overflow-hidden gap-px mb-5">
+                {LEVELS.map((lvl) => {
+                  const pct =
+                    chartTotal > 0 ? (levelValues[lvl] / chartTotal) * 100 : 0;
+                  if (pct === 0) return null;
+                  return (
+                    <div
+                      key={lvl}
+                      className={`${LEVEL_CONFIG[lvl].bar} transition-all duration-500`}
+                      style={{ width: `${pct}%` }}
+                      title={`${LEVEL_CONFIG[lvl].label}: ${levelValues[lvl]}`}
+                    />
+                  );
+                })}
+              </div>
 
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
-                         bg-ink-900 text-parchment text-sm font-semibold
-                         hover:bg-ink-800 transition-colors duration-150 cursor-pointer border-none"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              <i className="pi pi-play-circle text-base text-gold-400" />
-              Start Practice
-            </button>
-
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
-                         bg-surface-50 text-surface-700 text-sm font-medium
-                         border border-surface-200 hover:bg-surface-100
-                         transition-colors duration-150 cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              <i className="pi pi-plus-circle text-base text-sage-600" />
-              Add New Word
-            </button>
-
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
-                         bg-surface-50 text-surface-700 text-sm font-medium
-                         border border-surface-200 hover:bg-surface-100
-                         transition-colors duration-150 cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              <i className="pi pi-list text-base text-surface-400" />
-              Browse Vocabulary
-            </button>
-          </div>
+              {/* Legend */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {LEVELS.map((lvl) => {
+                  const cfg = LEVEL_CONFIG[lvl];
+                  const count = levelValues[lvl];
+                  const pct =
+                    chartTotal > 0 ? Math.round((count / chartTotal) * 100) : 0;
+                  return (
+                    <div key={lvl} className={`rounded-xl px-4 py-3 ${cfg.bg}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                        <span
+                          className={`text-xs font-semibold uppercase tracking-wider ${cfg.text}`}
+                          style={{ fontFamily: "var(--font-sans)" }}
+                        >
+                          {cfg.label}
+                        </span>
+                      </div>
+                      <p
+                        className="text-xl font-bold text-surface-900"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        {count}
+                      </p>
+                      <p
+                        className="text-xs text-surface-400 mt-0.5"
+                        style={{ fontFamily: "var(--font-sans)" }}
+                      >
+                        {pct}% of total
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </Layout>

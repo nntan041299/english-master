@@ -24,6 +24,20 @@ export interface WordPage {
   last: boolean;
 }
 
+export interface DashboardStats {
+  totalWords: number;
+  newWords: number;
+  learningWords: number;
+  familiarWords: number;
+  masteredWords: number;
+  practicesDone: number;
+}
+
+export const getDashboard = async (): Promise<DashboardStats> => {
+  const response = await request.get({ path: ENDPOINT.WORDS_DASHBOARD });
+  return response.data.data;
+};
+
 export const createWord = async (text: string): Promise<WordItem> => {
   const response = await request.post({
     path: ENDPOINT.WORDS,

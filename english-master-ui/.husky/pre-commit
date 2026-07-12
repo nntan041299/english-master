@@ -1,0 +1,3 @@
+cd english-master-ui
+npm run format
+npm run lint

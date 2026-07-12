@@ -19,7 +19,7 @@ import lombok.Getter;
  */
 @AllArgsConstructor
 @Getter
-public enum LearningLevel {
+public enum LearningTracking {
     TRACKING1(1),
     TRACKING2(3),
     TRACKING3(7),

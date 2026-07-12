@@ -34,11 +34,11 @@ public class PracticeService {
 
         return userPracticeRepository.findDueByUserId(
                         userId,
-                        now.minusDays(LearningLevel.TRACKING1.getDaysInterval()),
-                        now.minusDays(LearningLevel.TRACKING2.getDaysInterval()),
-                        now.minusDays(LearningLevel.TRACKING3.getDaysInterval()),
-                        now.minusDays(LearningLevel.TRACKING4.getDaysInterval()),
-                        now.minusDays(LearningLevel.TRACKING5.getDaysInterval()))
+                        now.minusDays(LearningTracking.TRACKING1.getDaysInterval()),
+                        now.minusDays(LearningTracking.TRACKING2.getDaysInterval()),
+                        now.minusDays(LearningTracking.TRACKING3.getDaysInterval()),
+                        now.minusDays(LearningTracking.TRACKING4.getDaysInterval()),
+                        now.minusDays(LearningTracking.TRACKING5.getDaysInterval()))
                 .stream()
                 .map(userPractice -> {
                     Practice practice = userPractice.getPractice();
@@ -46,7 +46,7 @@ public class PracticeService {
                     return new PracticeResponse(
                             meaning.getWord().getId(),
                             StringUtils.capitalizeFirst(meaning.getWord().getText()),
-                            userPractice.getLevel(),
+                            userPractice.getLearningTracking(),
                             practice.getId(),
                             meaning.getPartOfSpeech().name(),
                             StringUtils.capitalizeFirst(meaning.getMeaning()),
@@ -79,16 +79,16 @@ public class PracticeService {
                 .findByUserIdAndPracticeId(currentUser.getId(), request.practiceId())
                 .orElseThrow(() -> new EntityNotFoundException("UserPractice not found for practiceId: " + request.practiceId()));
 
-        LearningLevel newLevel = correct ? nextLevel(userPractice.getLevel()) : LearningLevel.TRACKING1;
-        userPractice.setLevel(newLevel);
+        LearningTracking newLearningTracking = correct ? nextLevel(userPractice.getLearningTracking()) : LearningTracking.TRACKING1;
+        userPractice.setLearningTracking(newLearningTracking);
         userPractice.setLastPracticedAt(LocalDateTime.now());
         userPracticeRepository.save(userPractice);
 
-        return new AnswerPracticeResponse(correct, practice.getCorrectAnswer(), newLevel);
+        return new AnswerPracticeResponse(correct, practice.getCorrectAnswer(), newLearningTracking);
     }
 
-    private LearningLevel nextLevel(LearningLevel current) {
-        LearningLevel[] levels = LearningLevel.values();
+    private LearningTracking nextLevel(LearningTracking current) {
+        LearningTracking[] levels = LearningTracking.values();
         int next = current.ordinal() + 1;
         return next < levels.length ? levels[next] : levels[levels.length - 1];
     }

@@ -20,11 +20,11 @@ public interface UserPracticeRepository extends JpaRepository<UserPractice, Long
             WHERE up.user.id = :userId
             AND (
                 up.lastPracticedAt IS NULL
-                OR (up.level = 'TRACKING1' AND up.lastPracticedAt <= :cutoffTracking1)
-                OR (up.level = 'TRACKING2' AND up.lastPracticedAt <= :cutoffTracking2)
-                OR (up.level = 'TRACKING3' AND up.lastPracticedAt <= :cutoffTracking3)
-                OR (up.level = 'TRACKING4' AND up.lastPracticedAt <= :cutoffTracking4)
-                OR (up.level = 'TRACKING5' AND up.lastPracticedAt <= :cutoffTracking5)
+                OR (up.learningTracking = 'TRACKING1' AND up.lastPracticedAt <= :cutoffTracking1)
+                OR (up.learningTracking = 'TRACKING2' AND up.lastPracticedAt <= :cutoffTracking2)
+                OR (up.learningTracking = 'TRACKING3' AND up.lastPracticedAt <= :cutoffTracking3)
+                OR (up.learningTracking = 'TRACKING4' AND up.lastPracticedAt <= :cutoffTracking4)
+                OR (up.learningTracking = 'TRACKING5' AND up.lastPracticedAt <= :cutoffTracking5)
             )
             """)
     List<UserPractice> findDueByUserId(

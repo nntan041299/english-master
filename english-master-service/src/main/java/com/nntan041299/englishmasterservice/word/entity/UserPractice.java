@@ -47,7 +47,7 @@ public class UserPractice extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private LearningLevel level;
+    private LearningTracking learningTracking;
 
     @Column(name = "last_practiced_at")
     private LocalDateTime lastPracticedAt;

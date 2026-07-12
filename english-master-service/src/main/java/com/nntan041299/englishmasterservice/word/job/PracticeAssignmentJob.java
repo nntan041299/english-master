@@ -5,6 +5,7 @@ import com.nntan041299.englishmasterservice.word.repository.PracticeRepository;
 import com.nntan041299.englishmasterservice.word.repository.UserPracticeRepository;
 import com.nntan041299.englishmasterservice.word.repository.UserWordRepository;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ public class PracticeAssignmentJob {
     private final UserWordRepository userWordRepository;
     private final PracticeRepository practiceRepository;
     private final UserPracticeRepository userPracticeRepository;
+    private final Random random = new Random();
 
     @Scheduled(cron = "${word.practice.assignment.cron}")
     @Transactional
@@ -50,12 +52,12 @@ public class PracticeAssignmentJob {
                 continue;
             }
 
-            // Pick one practice per meaning
+            // Pick one practice per meaning at random
             List<Practice> onePracticePerMeaning = practices.stream()
                     .collect(Collectors.toMap(
                             p -> p.getMeaning().getId(),
                             p -> p,
-                            (existing, replacement) -> existing))
+                            (existing, replacement) -> random.nextBoolean() ? existing : replacement))
                     .values().stream().toList();
 
             List<UserPractice> assignments = onePracticePerMeaning.stream()

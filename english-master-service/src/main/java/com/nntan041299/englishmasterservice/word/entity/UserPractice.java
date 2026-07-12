@@ -4,8 +4,6 @@ import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -45,9 +43,8 @@ public class UserPractice extends BaseEntity {
     @JoinColumn(name = "practice_id", nullable = false)
     private Practice practice;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private LearningLevel level;
+    @Column(nullable = false)
+    private LearningTracking learningTracking;
 
     @Column(name = "last_practiced_at")
     private LocalDateTime lastPracticedAt;

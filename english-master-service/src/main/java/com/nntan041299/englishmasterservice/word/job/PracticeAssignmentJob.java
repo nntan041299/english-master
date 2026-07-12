@@ -62,7 +62,7 @@ public class PracticeAssignmentJob {
                     .map(practice -> UserPractice.builder()
                             .user(userWord.getUser())
                             .practice(practice)
-                            .level(LearningLevel.TRACKING1)
+                            .learningTracking(LearningTracking.TRACKING1)
                             .build())
                     .toList();
 

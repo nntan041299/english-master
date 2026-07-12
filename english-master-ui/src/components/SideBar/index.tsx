@@ -15,7 +15,12 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/practice", label: "Practice", icon: "pi-pencil" },
 ];
 
-export default function SideBar() {
+interface SideBarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export default function SideBar({ open, onClose }: SideBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { removeToken } = useAuth();
@@ -26,16 +31,31 @@ export default function SideBar() {
     onError: () => removeToken(),
   });
 
-  return (
+  const handleNav = (path: string) => {
+    navigate(path);
+    onClose?.();
+  };
+
+  const sidebarContent = (
     <aside className="w-60 h-full flex flex-col flex-shrink-0 bg-ink-900 select-none">
       {/* Brand */}
-      <div className="h-14 flex items-center px-5 border-b border-white/8 flex-shrink-0">
+      <div className="h-14 flex items-center justify-between px-5 border-b border-white/8 flex-shrink-0">
         <span
           className="text-lg font-bold tracking-tight text-parchment"
           style={{ fontFamily: "var(--font-display)" }}
         >
           English <span className="text-gold-500">Master</span>
         </span>
+        {/* Close button — mobile only */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden text-white/50 hover:text-white transition-colors p-1 cursor-pointer"
+            aria-label="Close menu"
+          >
+            <i className="pi pi-times text-base" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -45,7 +65,7 @@ export default function SideBar() {
           return (
             <button
               key={path}
-              onClick={() => navigate(path)}
+              onClick={() => handleNav(path)}
               className={`
                 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                 transition-colors duration-150 cursor-pointer text-left
@@ -82,5 +102,35 @@ export default function SideBar() {
         </button>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex h-full">{sidebarContent}</div>
+
+      {/* Mobile drawer */}
+      {open !== undefined && (
+        <>
+          {/* Backdrop */}
+          <div
+            className={`
+              fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden
+              ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+            `}
+            onClick={onClose}
+          />
+          {/* Drawer */}
+          <div
+            className={`
+              fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 md:hidden
+              ${open ? "translate-x-0" : "-translate-x-full"}
+            `}
+          >
+            {sidebarContent}
+          </div>
+        </>
+      )}
+    </>
   );
 }

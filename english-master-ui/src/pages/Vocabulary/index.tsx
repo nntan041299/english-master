@@ -225,6 +225,11 @@ const Vocabulary = () => {
                                 <span className="text-sm text-surface-700">
                                   {m.meaning}
                                 </span>
+                                {m.ipa && (
+                                  <span className="text-xs text-surface-400 font-mono">
+                                    {m.ipa}
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>

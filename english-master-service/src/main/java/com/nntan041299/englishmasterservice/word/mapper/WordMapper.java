@@ -17,5 +17,6 @@ public interface WordMapper {
     WordResponse toResponse(UserWord userWord);
 
     @Mapping(target = "meaning", expression = "java(StringUtils.capitalizeFirst(meaning.getMeaning()))")
+    @Mapping(target = "ipa", source = "ipa")
     WordMeaningResponse toMeaningResponse(Meaning meaning);
 }

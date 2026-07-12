@@ -1,0 +1,1 @@
+ALTER TABLE meanings ADD COLUMN ipa VARCHAR(100);

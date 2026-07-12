@@ -226,7 +226,9 @@ const Vocabulary = () => {
                                   {m.meaning}
                                 </span>
                                 {m.ipa && (
-                                  <span className="text-xs text-surface-400 font-mono">{m.ipa}</span>
+                                  <span className="text-xs text-surface-400 font-mono">
+                                    {m.ipa}
+                                  </span>
                                 )}
                               </div>
                             ))}

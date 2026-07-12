@@ -23,7 +23,7 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "prepare": "husky"
+    "prepare": "cd .. && git config core.hooksPath english-master-ui/.husky"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

@@ -5,6 +5,112 @@ import type { WordItem, WordMeaning, WordPage } from "@/service/word";
 
 const PAGE_SIZE = 10;
 
+const LEVEL_COLOR: Record<string, string> = {
+  NEW: "bg-sage-100 text-sage-700",
+  LEVEL_1: "bg-indigo-50 text-indigo-600",
+  LEVEL_2: "bg-indigo-50 text-indigo-600",
+  LEVEL_3: "bg-indigo-50 text-indigo-600",
+  LEVEL_4: "bg-gold-100 text-gold-600",
+  LEVEL_5: "bg-gold-100 text-gold-600",
+  MASTERED: "bg-surface-100 text-surface-500",
+};
+
+function LevelBadge({ level }: { level: string }) {
+  const color = LEVEL_COLOR[level] ?? "bg-surface-100 text-surface-500";
+  return (
+    <span
+      className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${color}`}
+      style={{ fontFamily: "var(--font-sans)" }}
+    >
+      {level.replace("_", " ")}
+    </span>
+  );
+}
+
+/* ── Mobile card ── */
+function WordCard({ w }: { w: WordItem }) {
+  return (
+    <div className="px-4 py-3.5 border-b border-surface-100 last:border-0">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <span
+          className="font-bold text-surface-900 text-base truncate"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {w.text}
+        </span>
+        <LevelBadge level={w.learningLevel} />
+      </div>
+      <div className="flex flex-col gap-1">
+        {(w.meanings ?? []).map((m: WordMeaning) => (
+          <div key={m.id} className="flex items-start gap-2 flex-wrap">
+            <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize shrink-0">
+              {m.partOfSpeech.toLowerCase()}
+            </span>
+            <span className="text-sm text-surface-600 leading-snug">
+              {m.meaning}
+            </span>
+            {m.ipa && (
+              <span className="text-xs text-surface-400 font-mono">
+                {m.ipa}
+              </span>
+            )}
+          </div>
+        ))}
+        {(w.meanings ?? []).length === 0 && (
+          <span
+            className="text-xs text-surface-400 italic"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            Enriching…
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Desktop table row ── */
+function WordRow({ w, idx, page }: { w: WordItem; idx: number; page: number }) {
+  return (
+    <tr className="border-b border-surface-100 last:border-0 hover:bg-surface-50 transition-colors">
+      <td className="px-5 py-3.5 text-surface-400 text-xs">
+        {page * PAGE_SIZE + idx + 1}
+      </td>
+      <td className="px-5 py-3.5">
+        <span
+          className="font-semibold text-surface-900"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {w.text}
+        </span>
+      </td>
+      <td className="px-5 py-3.5">
+        <div className="flex flex-col gap-1">
+          {(w.meanings ?? []).map((m: WordMeaning) => (
+            <div key={m.id} className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize">
+                {m.partOfSpeech.toLowerCase()}
+              </span>
+              <span className="text-sm text-surface-700">{m.meaning}</span>
+              {m.ipa && (
+                <span className="text-xs text-surface-400 font-mono">
+                  {m.ipa}
+                </span>
+              )}
+            </div>
+          ))}
+          {(w.meanings ?? []).length === 0 && (
+            <span className="text-xs text-surface-400 italic">Enriching…</span>
+          )}
+        </div>
+      </td>
+      <td className="px-5 py-3.5">
+        <LevelBadge level={w.learningLevel} />
+      </td>
+    </tr>
+  );
+}
+
 const Vocabulary = () => {
   const [word, setWord] = useState("");
   const [search, setSearch] = useState("");
@@ -61,7 +167,7 @@ const Vocabulary = () => {
 
   return (
     <Layout>
-      <div className="h-full flex flex-col px-6 py-4 gap-4 max-w-5xl mx-auto w-full">
+      <div className="h-full flex flex-col px-4 sm:px-6 py-4 gap-4 max-w-5xl mx-auto w-full">
         {/* Page header */}
         <h1
           className="text-2xl font-bold text-surface-900 shrink-0"
@@ -70,7 +176,7 @@ const Vocabulary = () => {
           Vocabulary
         </h1>
 
-        {/* Add word form — compact, no card title */}
+        {/* Add word form */}
         <div className="bg-white rounded-2xl border border-surface-200 px-4 py-3 shrink-0">
           <form onSubmit={handleAdd} className="flex gap-3">
             <input
@@ -80,14 +186,11 @@ const Vocabulary = () => {
               placeholder="Add a new word, e.g. eloquent"
               required
               autoFocus
-              className="flex-1 px-3.5 py-2 rounded-lg border border-surface-200 bg-surface-50
+              className="flex-1 min-w-0 px-3.5 py-2 rounded-lg border border-surface-200 bg-surface-50
                          text-sm text-surface-900 placeholder:text-surface-400
                          focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:border-ink-700
                          transition-colors"
-              style={{
-                fontFamily: "var(--font-sans)",
-                borderRadius: "var(--radius-input)",
-              }}
+              style={{ fontFamily: "var(--font-sans)" }}
             />
             <button
               type="submit"
@@ -96,28 +199,24 @@ const Vocabulary = () => {
                          bg-ink-900 text-parchment text-sm font-semibold
                          hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed
                          transition-colors duration-150 cursor-pointer border-none shrink-0"
-              style={{
-                fontFamily: "var(--font-sans)",
-                borderRadius: "var(--radius-btn)",
-              }}
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {submitting ? (
-                <>
-                  <i className="pi pi-spin pi-spinner text-sm" /> Adding…
-                </>
+                <i className="pi pi-spin pi-spinner text-sm" />
               ) : (
                 <>
-                  <i className="pi pi-plus text-sm" /> Add
+                  <i className="pi pi-plus text-sm" />
+                  <span className="hidden sm:inline">Add</span>
                 </>
               )}
             </button>
           </form>
         </div>
 
-        {/* Word list — fills remaining height */}
+        {/* Word list */}
         <div className="flex-1 flex flex-col min-h-0 gap-3">
           {/* Toolbar */}
-          <div className="flex items-center justify-between gap-4 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shrink-0">
             <span
               className="text-sm font-semibold text-surface-700 uppercase tracking-widest"
               style={{ fontFamily: "var(--font-sans)" }}
@@ -137,19 +236,16 @@ const Vocabulary = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search words…"
-                className="pl-8 pr-3.5 py-2 rounded-lg border border-surface-200 bg-white
-                           text-sm text-surface-900 placeholder:text-surface-400 w-52
+                className="w-full sm:w-52 pl-8 pr-3.5 py-2 rounded-lg border border-surface-200 bg-white
+                           text-sm text-surface-900 placeholder:text-surface-400
                            focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:border-ink-700
                            transition-colors"
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  borderRadius: "var(--radius-input)",
-                }}
+                style={{ fontFamily: "var(--font-sans)" }}
               />
             </div>
           </div>
 
-          {/* Scrollable table */}
+          {/* Content card */}
           <div className="flex-1 min-h-0 bg-white rounded-2xl border border-surface-200 overflow-hidden flex flex-col">
             <div className="flex-1 overflow-y-auto">
               {loading ? (
@@ -175,80 +271,48 @@ const Vocabulary = () => {
                   </p>
                 </div>
               ) : (
-                <table
-                  className="w-full text-sm"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  <thead className="sticky top-0 z-10">
-                    <tr className="border-b border-surface-100 bg-surface-50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-8">
-                        #
-                      </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                        Word
-                      </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                        Meanings
-                      </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                        Learning Level
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {words.map((w, idx) => (
-                      <tr
-                        key={w.id}
-                        className="border-b border-surface-100 last:border-0 hover:bg-surface-50 transition-colors"
-                      >
-                        <td className="px-5 py-3.5 text-surface-400 text-xs">
-                          {page * PAGE_SIZE + idx + 1}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span
-                            className="font-semibold text-surface-900"
-                            style={{ fontFamily: "var(--font-display)" }}
-                          >
-                            {w.text}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex flex-col gap-1">
-                            {(w.meanings ?? []).map((m: WordMeaning) => (
-                              <div
-                                key={m.id}
-                                className="flex items-center gap-2"
-                              >
-                                <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize">
-                                  {m.partOfSpeech.toLowerCase()}
-                                </span>
-                                <span className="text-sm text-surface-700">
-                                  {m.meaning}
-                                </span>
-                                {m.ipa && (
-                                  <span className="text-xs text-surface-400 font-mono">
-                                    {m.ipa}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span className="text-xs font-medium text-surface-500 bg-surface-100 px-2 py-0.5 rounded-full">
-                            {w.learningLevel}
-                          </span>
-                        </td>
-                      </tr>
+                <>
+                  {/* Mobile: card list */}
+                  <div className="sm:hidden">
+                    {words.map((w) => (
+                      <WordCard key={w.id} w={w} />
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+
+                  {/* Desktop: table */}
+                  <table
+                    className="hidden sm:table w-full text-sm"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    <thead className="sticky top-0 z-10">
+                      <tr className="border-b border-surface-100 bg-surface-50">
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-8">
+                          #
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          Word
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          Meanings
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          Level
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {words.map((w, idx) => (
+                        <WordRow key={w.id} w={w} idx={idx} page={page} />
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </div>
 
-            {/* Pagination — always visible inside the card */}
+            {/* Pagination */}
             <div
-              className="shrink-0 border-t border-surface-100 px-5 py-3 flex items-center justify-between bg-white"
+              className="shrink-0 border-t border-surface-100 px-4 sm:px-5 py-3 flex items-center justify-between bg-white"
               style={{ fontFamily: "var(--font-sans)" }}
             >
               <p className="text-xs text-surface-400">
@@ -264,11 +328,13 @@ const Vocabulary = () => {
                 >
                   <i className="pi pi-chevron-left text-[10px]" />
                 </button>
+
+                {/* Page numbers — desktop only */}
                 {Array.from({ length: totalPages }, (_, i) => (
                   <button
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`w-7 h-7 flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer border
+                    className={`hidden sm:flex w-7 h-7 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer border
                       ${
                         i === page
                           ? "bg-ink-900 text-parchment border-ink-900"
@@ -278,6 +344,7 @@ const Vocabulary = () => {
                     {i + 1}
                   </button>
                 ))}
+
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={data?.last ?? true}

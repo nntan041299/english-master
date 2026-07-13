@@ -2,27 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/layouts/Layout";
 import { usePractices, useAnswerPractice } from "@/hook/usePractice";
-import type { PracticeItem } from "@/service/practice";
+import type { PracticeItem, PracticeOption } from "@/service/practice";
 
-type OptionKey = "OPTION_1" | "OPTION_2" | "OPTION_3" | "OPTION_4";
 type AnswerState = "idle" | "correct" | "wrong";
 
-const OPTION_KEYS: OptionKey[] = [
-  "OPTION_1",
-  "OPTION_2",
-  "OPTION_3",
-  "OPTION_4",
-];
-
-function getOptionText(item: PracticeItem, key: OptionKey): string {
-  const map: Record<OptionKey, string> = {
-    OPTION_1: item.option1,
-    OPTION_2: item.option2,
-    OPTION_3: item.option3,
-    OPTION_4: item.option4,
-  };
-  return map[key];
-}
+const OPTION_LABELS = ["A", "B", "C", "D"];
 
 function CircleProgress({
   current,
@@ -71,22 +55,22 @@ function CircleProgress({
 }
 
 function OptionButton({
-  text,
-  optionKey,
-  correctKey,
-  selected,
+  option,
+  label,
+  correctIds,
+  selectedIds,
   answerState,
   onSelect,
 }: {
-  text: string;
-  optionKey: OptionKey;
-  correctKey: OptionKey;
-  selected: OptionKey | null;
+  option: PracticeOption;
+  label: string;
+  correctIds: string[];
+  selectedIds: string[];
   answerState: AnswerState;
-  onSelect: (key: OptionKey) => void;
+  onSelect: (id: string) => void;
 }) {
-  const isSelected = selected === optionKey;
-  const isCorrect = optionKey === correctKey;
+  const isSelected = selectedIds.includes(option.id);
+  const isCorrect = correctIds.includes(option.id);
   const revealed = answerState !== "idle";
 
   let bg = "bg-white hover:bg-surface-50 border-surface-200 text-surface-800";
@@ -105,7 +89,7 @@ function OptionButton({
 
   return (
     <button
-      onClick={() => !revealed && onSelect(optionKey)}
+      onClick={() => !revealed && onSelect(option.id)}
       disabled={revealed}
       className={`
         w-full text-left px-4 py-3.5 rounded-xl border text-sm font-medium
@@ -130,15 +114,9 @@ function OptionButton({
             }
           `}
         >
-          {optionKey === "OPTION_1"
-            ? "A"
-            : optionKey === "OPTION_2"
-              ? "B"
-              : optionKey === "OPTION_3"
-                ? "C"
-                : "D"}
+          {label}
         </span>
-        {text}
+        {option.text}
       </span>
     </button>
   );
@@ -154,12 +132,12 @@ export default function Practice() {
   } = usePractices();
   const answerMutation = useAnswerPractice();
   const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<OptionKey | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [answerState, setAnswerState] = useState<AnswerState>("idle");
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
 
-  const current = items[index];
+  const current: PracticeItem | undefined = items[index];
   const total = items.length;
 
   const advance = () => {
@@ -168,21 +146,22 @@ export default function Practice() {
         setDone(true);
       } else {
         setIndex((i) => i + 1);
-        setSelected(null);
+        setSelectedIds([]);
         setAnswerState("idle");
       }
     }, 1200);
   };
 
-  const handleSelect = (key: OptionKey) => {
+  const handleSelect = (id: string) => {
     if (answerState !== "idle") return;
-    setSelected(key);
+    const next = [id];
+    setSelectedIds(next);
 
     answerMutation.mutate(
       {
         wordId: current.wordId,
         practiceId: current.practiceId,
-        selectedOption: key,
+        selectedOptionIds: next,
       },
       {
         onSuccess: (result) => {
@@ -191,7 +170,8 @@ export default function Practice() {
           advance();
         },
         onError: () => {
-          const isCorrect = key === current.correctAnswer;
+          const isCorrect =
+            JSON.stringify(next) === JSON.stringify(current.correctAnswer);
           setAnswerState(isCorrect ? "correct" : "wrong");
           if (isCorrect) setScore((s) => s + 1);
           advance();
@@ -202,7 +182,7 @@ export default function Practice() {
 
   const restart = () => {
     setIndex(0);
-    setSelected(null);
+    setSelectedIds([]);
     setAnswerState("idle");
     setScore(0);
     setDone(false);
@@ -297,12 +277,10 @@ export default function Practice() {
             style={{ boxShadow: "0 4px 32px 0 rgba(26,31,46,0.07)" }}
           >
             <div
-              className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl
-                ${perfect ? "bg-gold-100 text-gold-600" : "bg-sage-100 text-sage-600"}`}
+              className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl ${perfect ? "bg-gold-100 text-gold-600" : "bg-sage-100 text-sage-600"}`}
             >
               {perfect ? "🎉" : "✓"}
             </div>
-
             <div>
               <h2
                 className="text-2xl font-bold text-surface-900 mb-1"
@@ -319,7 +297,6 @@ export default function Practice() {
                   : `You got ${score} out of ${total} correct.`}
               </p>
             </div>
-
             <div className="w-full bg-surface-100 rounded-xl p-4 flex items-center justify-between">
               <span
                 className="text-sm text-surface-500"
@@ -334,20 +311,17 @@ export default function Practice() {
                 {pct}%
               </span>
             </div>
-
             <div className="flex gap-3 w-full">
               <button
                 onClick={() => navigate("/")}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-surface-200 bg-white text-surface-700
-                           text-sm font-medium cursor-pointer hover:bg-surface-50 transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-surface-200 bg-white text-surface-700 text-sm font-medium cursor-pointer hover:bg-surface-50 transition-colors"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
                 Dashboard
               </button>
               <button
                 onClick={restart}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold
-                           cursor-pointer border-none hover:bg-ink-800 transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
                 Practice again
@@ -411,19 +385,19 @@ export default function Practice() {
               className="text-sm text-surface-400 mt-1"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              What does this word mean?
+              {current.question ?? "What does this word mean?"}
             </p>
           </div>
 
           {/* Options grid */}
           <div className="grid grid-cols-2 gap-3">
-            {OPTION_KEYS.map((key) => (
+            {current.options.map((option, i) => (
               <OptionButton
-                key={key}
-                text={getOptionText(current, key)}
-                optionKey={key}
-                correctKey={current.correctAnswer}
-                selected={selected}
+                key={option.id}
+                option={option}
+                label={OPTION_LABELS[i] ?? String(i + 1)}
+                correctIds={current.correctAnswer}
+                selectedIds={selectedIds}
                 answerState={answerState}
                 onSelect={handleSelect}
               />

@@ -11,12 +11,12 @@ import com.nntan041299.englishmasterservice.word.repository.PracticeRepository;
 import com.nntan041299.englishmasterservice.word.repository.UserPracticeRepository;
 import com.nntan041299.englishmasterservice.word.repository.UserPracticeResultRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,10 +46,8 @@ public class PracticeService {
                             practice.getId(),
                             meaning.getPartOfSpeech().name(),
                             StringUtils.capitalizeFirst(meaning.getMeaning()),
-                            StringUtils.capitalizeFirst(practice.getOption1()),
-                            StringUtils.capitalizeFirst(practice.getOption2()),
-                            StringUtils.capitalizeFirst(practice.getOption3()),
-                            StringUtils.capitalizeFirst(practice.getOption4()),
+                            practice.getQuestion(),
+                            practice.getOptions(),
                             practice.getCorrectAnswer());
                 })
                 .toList();
@@ -62,12 +60,12 @@ public class PracticeService {
         Practice practice = practiceRepository.findById(request.practiceId())
                 .orElseThrow(() -> new EntityNotFoundException("Practice not found: " + request.practiceId()));
 
-        boolean correct = practice.getCorrectAnswer() == request.selectedOption();
+        boolean correct = practice.getCorrectAnswer().equals(request.selectedOptionIds());
 
         userPracticeResultRepository.save(UserPracticeResult.builder()
                 .user(currentUser)
                 .practice(practice)
-                .answeredOption(request.selectedOption())
+                .answeredOptionIds(request.selectedOptionIds())
                 .correct(correct)
                 .build());
 

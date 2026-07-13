@@ -1,6 +1,7 @@
 package com.nntan041299.englishmasterservice.word.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.nntan041299.englishmasterservice.word.entity.PracticeOption;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -11,10 +12,8 @@ public record PracticeAiResponse(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PracticeItem(
-            String option1,
-            String option2,
-            String option3,
-            String option4,
-            String correctAnswer
+            String question,
+            List<PracticeOption> options,
+            List<String> correctAnswer
     ) {}
 }

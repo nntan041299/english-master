@@ -3,9 +3,8 @@ package com.nntan041299.englishmasterservice.word.entity;
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,9 +40,9 @@ public class UserPracticeResult extends BaseEntity {
     @JoinColumn(name = "practice_id", nullable = false)
     private Practice practice;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "answered_option", nullable = false, length = 20)
-    private PracticeOption answeredOption;
+    @Convert(converter = StringListConverter.class)
+    @Column(name = "answered_option", nullable = false, columnDefinition = "TEXT")
+    private List<String> answeredOptionIds;
 
     @Column(name = "is_correct", nullable = false)
     private Boolean correct;

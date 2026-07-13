@@ -1,6 +1,6 @@
-package com.nntan041299.englishmasterservice.word.repository;
+package com.nntan041299.englishmasterservice.practice.repository;
 
-import com.nntan041299.englishmasterservice.word.entity.Practice;
+import com.nntan041299.englishmasterservice.practice.entity.Practice;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,9 +1,9 @@
-package com.nntan041299.englishmasterservice.word.controller;
+package com.nntan041299.englishmasterservice.practice.controller;
 
-import com.nntan041299.englishmasterservice.word.dto.AnswerPracticeRequest;
-import com.nntan041299.englishmasterservice.word.dto.AnswerPracticeResponse;
-import com.nntan041299.englishmasterservice.word.dto.PracticeResponse;
-import com.nntan041299.englishmasterservice.word.service.PracticeService;
+import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeRequest;
+import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeResponse;
+import com.nntan041299.englishmasterservice.practice.dto.PracticeResponse;
+import com.nntan041299.englishmasterservice.practice.service.PracticeService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

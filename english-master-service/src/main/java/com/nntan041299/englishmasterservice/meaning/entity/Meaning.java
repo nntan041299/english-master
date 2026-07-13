@@ -1,9 +1,11 @@
-package com.nntan041299.englishmasterservice.word.entity;
+package com.nntan041299.englishmasterservice.meaning.entity;
 
-import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
+import com.nntan041299.englishmasterservice.word.entity.Word;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,8 +13,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,32 +20,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-        name = "user_practices",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "practice_id"})
-)
+@Table(name = "meanings")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserPractice extends BaseEntity {
+public class Meaning extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "word_id", nullable = false)
+    private Word word;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "practice_id", nullable = false)
-    private Practice practice;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "part_of_speech", nullable = false, length = 20)
+    private PartOfSpeech partOfSpeech;
 
-    @Column(nullable = false)
-    private LearningTracking learningTracking;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String meaning;
 
-    @Column(name = "last_practiced_at")
-    private LocalDateTime lastPracticedAt;
+    @Column(length = 100)
+    private String ipa;
 }

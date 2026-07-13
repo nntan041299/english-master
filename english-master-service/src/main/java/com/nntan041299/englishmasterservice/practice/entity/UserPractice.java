@@ -1,8 +1,8 @@
-package com.nntan041299.englishmasterservice.word.entity;
+package com.nntan041299.englishmasterservice.practice.entity;
 
+import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -11,8 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.util.List;
-
+import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,30 +20,32 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "practices")
+@Table(
+        name = "user_practices",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "practice_id"})
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Practice extends BaseEntity {
+public class UserPractice extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "meaning_id", nullable = false)
-    private Meaning meaning;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Convert(converter = PracticeOptionListConverter.class)
-    @Column(name = "options", nullable = false, columnDefinition = "TEXT")
-    private List<PracticeOption> options;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "practice_id", nullable = false)
+    private Practice practice;
 
-    @Column(name = "question", length = 1000)
-    private String question;
+    @Column(nullable = false)
+    private LearningTracking learningTracking;
 
-    @Convert(converter = StringListConverter.class)
-    @Column(name = "correct_answer", nullable = false, columnDefinition = "TEXT")
-    private List<String> correctAnswer;
+    @Column(name = "last_practiced_at")
+    private LocalDateTime lastPracticedAt;
 }

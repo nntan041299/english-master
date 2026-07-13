@@ -1,8 +1,12 @@
-package com.nntan041299.englishmasterservice.word.job;
+package com.nntan041299.englishmasterservice.practice.job;
 
-import com.nntan041299.englishmasterservice.word.entity.*;
-import com.nntan041299.englishmasterservice.word.repository.PracticeRepository;
-import com.nntan041299.englishmasterservice.word.repository.UserPracticeRepository;
+import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
+import com.nntan041299.englishmasterservice.practice.entity.LearningTracking;
+import com.nntan041299.englishmasterservice.practice.entity.Practice;
+import com.nntan041299.englishmasterservice.practice.entity.UserPractice;
+import com.nntan041299.englishmasterservice.practice.repository.PracticeRepository;
+import com.nntan041299.englishmasterservice.practice.repository.UserPracticeRepository;
+import com.nntan041299.englishmasterservice.word.entity.UserWord;
 import com.nntan041299.englishmasterservice.word.repository.UserWordRepository;
 import java.util.List;
 import java.util.Random;

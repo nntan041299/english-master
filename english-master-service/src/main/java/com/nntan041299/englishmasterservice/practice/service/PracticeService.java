@@ -1,22 +1,25 @@
-package com.nntan041299.englishmasterservice.word.service;
+package com.nntan041299.englishmasterservice.practice.service;
 
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
 import com.nntan041299.englishmasterservice.common.util.StringUtils;
-import com.nntan041299.englishmasterservice.word.dto.AnswerPracticeRequest;
-import com.nntan041299.englishmasterservice.word.dto.AnswerPracticeResponse;
-import com.nntan041299.englishmasterservice.word.dto.PracticeResponse;
-import com.nntan041299.englishmasterservice.word.entity.*;
-import com.nntan041299.englishmasterservice.word.repository.PracticeRepository;
-import com.nntan041299.englishmasterservice.word.repository.UserPracticeRepository;
-import com.nntan041299.englishmasterservice.word.repository.UserPracticeResultRepository;
+import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
+import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeRequest;
+import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeResponse;
+import com.nntan041299.englishmasterservice.practice.dto.PracticeResponse;
+import com.nntan041299.englishmasterservice.practice.entity.LearningTracking;
+import com.nntan041299.englishmasterservice.practice.entity.Practice;
+import com.nntan041299.englishmasterservice.practice.entity.UserPractice;
+import com.nntan041299.englishmasterservice.practice.entity.UserPracticeResult;
+import com.nntan041299.englishmasterservice.practice.repository.PracticeRepository;
+import com.nntan041299.englishmasterservice.practice.repository.UserPracticeRepository;
+import com.nntan041299.englishmasterservice.practice.repository.UserPracticeResultRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +63,10 @@ public class PracticeService {
         Practice practice = practiceRepository.findById(request.practiceId())
                 .orElseThrow(() -> new EntityNotFoundException("Practice not found: " + request.practiceId()));
 
+        UserPractice userPractice = userPracticeRepository
+                .findByUserIdAndPracticeId(currentUser.getId(), practice.getId())
+                .orElseThrow(() -> new EntityNotFoundException("UserPractice not found for user " + currentUser.getId() + " and practice " + practice.getId()));
+
         boolean correct = practice.getCorrectAnswer().equals(request.selectedOptionIds());
 
         userPracticeResultRepository.save(UserPracticeResult.builder()
@@ -69,21 +76,19 @@ public class PracticeService {
                 .correct(correct)
                 .build());
 
-        UserPractice userPractice = userPracticeRepository
-                .findByUserIdAndPracticeId(currentUser.getId(), request.practiceId())
-                .orElseThrow(() -> new EntityNotFoundException("UserPractice not found for practiceId: " + request.practiceId()));
+        LearningTracking newTracking = userPractice.getLearningTracking();
+        if (correct) {
+            LearningTracking[] values = LearningTracking.values();
+            int nextOrdinal = newTracking.ordinal() + 1;
+            if (nextOrdinal < values.length) {
+                newTracking = values[nextOrdinal];
+            }
+        }
 
-        LearningTracking newLearningTracking = correct ? nextLevel(userPractice.getLearningTracking()) : LearningTracking.TRACKING1;
-        userPractice.setLearningTracking(newLearningTracking);
+        userPractice.setLearningTracking(newTracking);
         userPractice.setLastPracticedAt(LocalDateTime.now());
         userPracticeRepository.save(userPractice);
 
-        return new AnswerPracticeResponse(correct, practice.getCorrectAnswer(), newLearningTracking);
-    }
-
-    private LearningTracking nextLevel(LearningTracking current) {
-        LearningTracking[] levels = LearningTracking.values();
-        int next = current.ordinal() + 1;
-        return next < levels.length ? levels[next] : levels[levels.length - 1];
+        return new AnswerPracticeResponse(correct, practice.getCorrectAnswer(), newTracking);
     }
 }

@@ -1,4 +1,4 @@
-package com.nntan041299.englishmasterservice.word.entity;
+package com.nntan041299.englishmasterservice.practice.entity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

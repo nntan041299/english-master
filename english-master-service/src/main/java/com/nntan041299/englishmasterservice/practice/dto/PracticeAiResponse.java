@@ -1,7 +1,7 @@
-package com.nntan041299.englishmasterservice.word.dto;
+package com.nntan041299.englishmasterservice.practice.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.nntan041299.englishmasterservice.word.entity.PracticeOption;
+import com.nntan041299.englishmasterservice.practice.entity.PracticeOption;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

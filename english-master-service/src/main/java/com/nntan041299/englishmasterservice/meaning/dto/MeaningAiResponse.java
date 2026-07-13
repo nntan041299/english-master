@@ -1,4 +1,4 @@
-package com.nntan041299.englishmasterservice.word.dto;
+package com.nntan041299.englishmasterservice.meaning.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

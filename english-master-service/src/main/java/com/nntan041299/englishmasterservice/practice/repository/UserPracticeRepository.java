@@ -1,7 +1,8 @@
-package com.nntan041299.englishmasterservice.word.repository;
+package com.nntan041299.englishmasterservice.practice.repository;
 
-import com.nntan041299.englishmasterservice.word.entity.LearningTracking;
-import com.nntan041299.englishmasterservice.word.entity.UserPractice;
+import com.nntan041299.englishmasterservice.practice.entity.LearningTracking;
+import com.nntan041299.englishmasterservice.practice.entity.UserPractice;
+import com.nntan041299.englishmasterservice.word.repository.WordAvgPoint;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

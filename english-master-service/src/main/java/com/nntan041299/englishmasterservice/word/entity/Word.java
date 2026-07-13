@@ -1,6 +1,7 @@
 package com.nntan041299.englishmasterservice.word.entity;
 
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
+import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

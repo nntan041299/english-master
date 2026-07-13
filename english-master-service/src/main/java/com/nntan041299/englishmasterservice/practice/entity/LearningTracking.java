@@ -1,4 +1,4 @@
-package com.nntan041299.englishmasterservice.word.entity;
+package com.nntan041299.englishmasterservice.practice.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

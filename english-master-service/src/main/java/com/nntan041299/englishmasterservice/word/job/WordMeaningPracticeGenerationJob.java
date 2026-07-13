@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class WordMeaningPracticeGenerationJob {
 
-    private static final int BATCH_SIZE = 5;
+    private static final int BATCH_SIZE = 1;
     private static final int PRACTICES_PER_MEANING = 10;
 
     private final MeaningRepository meaningRepository;
@@ -84,13 +84,12 @@ public class WordMeaningPracticeGenerationJob {
             }
 
             items.stream()
+                    .filter(item -> item.options() != null && !item.options().isEmpty() && item.correctAnswer() != null)
                     .map(item -> Practice.builder()
                             .meaning(meaning)
-                            .option1(item.option1())
-                            .option2(item.option2())
-                            .option3(item.option3())
-                            .option4(item.option4())
-                            .correctAnswer(parseOption(item.correctAnswer(), meaning.getWord().getText()))
+                            .question(item.question())
+                            .options(item.options())
+                            .correctAnswer(item.correctAnswer())
                             .build())
                     .forEach(allPractices::add);
 
@@ -99,15 +98,5 @@ public class WordMeaningPracticeGenerationJob {
 
         practiceRepository.saveAll(allPractices);
         log.info("word_meaning_practice_generation_job total_practices_saved={}", allPractices.size());
-    }
-
-    private PracticeOption parseOption(String raw, String word) {
-        if (raw == null) return PracticeOption.OPTION_1;
-        try {
-            return PracticeOption.valueOf(raw.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            log.error("word_meaning_practice_generation_job unknown_option word={} raw={}", word, raw);
-            return PracticeOption.OPTION_1;
-        }
     }
 }

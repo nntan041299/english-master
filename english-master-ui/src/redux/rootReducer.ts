@@ -1,4 +1,4 @@
-import { combineReducers, UnknownAction } from "redux";
+import { combineReducers, UnknownAction } from "@reduxjs/toolkit";
 
 import { reducer as userReducer } from "./user";
 

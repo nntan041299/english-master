@@ -1,5 +1,10 @@
 import { request, ENDPOINT } from "@/rest";
 
+export interface PracticeOption {
+  id: string;
+  text: string;
+}
+
 export interface PracticeItem {
   wordId: number;
   word: string;
@@ -7,22 +12,20 @@ export interface PracticeItem {
   practiceId: number;
   partOfSpeech: string;
   meaning: string;
-  option1: string;
-  option2: string;
-  option3: string;
-  option4: string;
-  correctAnswer: "OPTION_1" | "OPTION_2" | "OPTION_3" | "OPTION_4";
+  question: string | null;
+  options: PracticeOption[];
+  correctAnswer: string[];
 }
 
 export interface AnswerRequest {
   wordId: number;
   practiceId: number;
-  selectedOption: string;
+  selectedOptionIds: string[];
 }
 
 export interface AnswerResponse {
   correct: boolean;
-  correctAnswer: "OPTION_1" | "OPTION_2" | "OPTION_3" | "OPTION_4";
+  correctAnswer: string[];
   newLearningTracking: string;
 }
 

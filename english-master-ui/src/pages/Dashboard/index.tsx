@@ -147,7 +147,7 @@ const Dashboard = () => {
               <button
                 type="submit"
                 disabled={submitting || !word.trim()}
-                className="h-full px-5 rounded-xl bg-ink-900 text-parchment text-sm font-semibold
+                className="h-full px-3 sm:px-5 rounded-xl bg-ink-900 text-parchment text-sm font-semibold
                            hover:bg-ink-800 disabled:opacity-30 disabled:cursor-not-allowed
                            transition-colors duration-150 cursor-pointer border-none"
                 style={{ fontFamily: "var(--font-sans)" }}
@@ -155,7 +155,7 @@ const Dashboard = () => {
                 {submitting ? (
                   <i className="pi pi-spin pi-spinner text-sm" />
                 ) : (
-                  "Add"
+                  <i className="pi pi-plus text-sm" />
                 )}
               </button>
             </div>

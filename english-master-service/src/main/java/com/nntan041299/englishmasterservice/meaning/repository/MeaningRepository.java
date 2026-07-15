@@ -10,6 +10,6 @@ public interface MeaningRepository extends JpaRepository<Meaning, Long> {
 
     List<Meaning> findByWordId(Long wordId);
 
-    @Query("SELECT m FROM Meaning m WHERE m.partOfSpeech <> 'OTHER' AND NOT EXISTS (SELECT 1 FROM Practice p WHERE p.meaning = m)")
+    @Query("SELECT m FROM Meaning m JOIN FETCH m.word WHERE m.partOfSpeech <> 'OTHER' AND NOT EXISTS (SELECT 1 FROM Practice p WHERE p.meaning = m)")
     List<Meaning> findMeaningsWithoutPractices(Pageable pageable);
 }

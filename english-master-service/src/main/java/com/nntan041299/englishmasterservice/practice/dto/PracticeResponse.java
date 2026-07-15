@@ -2,6 +2,7 @@ package com.nntan041299.englishmasterservice.practice.dto;
 
 import com.nntan041299.englishmasterservice.practice.entity.LearningTracking;
 import com.nntan041299.englishmasterservice.practice.entity.PracticeOption;
+import com.nntan041299.englishmasterservice.practice.entity.PracticeType;
 import java.util.List;
 
 public record PracticeResponse(
@@ -11,6 +12,7 @@ public record PracticeResponse(
         Long practiceId,
         String partOfSpeech,
         String meaning,
+        PracticeType practiceType,
         String question,
         List<PracticeOption> options,
         List<String> correctAnswer

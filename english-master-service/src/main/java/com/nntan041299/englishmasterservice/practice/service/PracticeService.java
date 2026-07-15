@@ -49,6 +49,7 @@ public class PracticeService {
                             practice.getId(),
                             meaning.getPartOfSpeech().name(),
                             StringUtils.capitalizeFirst(meaning.getMeaning()),
+                            practice.getPracticeType(),
                             practice.getQuestion(),
                             practice.getOptions(),
                             practice.getCorrectAnswer());

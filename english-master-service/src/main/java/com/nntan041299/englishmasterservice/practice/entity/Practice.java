@@ -5,6 +5,8 @@ import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,6 +37,10 @@ public class Practice extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "meaning_id", nullable = false)
     private Meaning meaning;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "practice_type", nullable = false, length = 30)
+    private PracticeType practiceType;
 
     @Convert(converter = PracticeOptionListConverter.class)
     @Column(name = "options", nullable = false, columnDefinition = "TEXT")

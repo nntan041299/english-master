@@ -5,7 +5,6 @@ import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
 import PageLoader from "@/components/PageLoader";
-import { PrimeReactProvider } from "primereact/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthProvider";
 import AppRouter from "@/router/AppRouter";
@@ -23,13 +22,11 @@ export default function RouteApp() {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <Provider store={store}>
-          <PrimeReactProvider>
-            <AuthProvider>
-              <Suspense fallback={<PageLoader />}>
-                <Main />
-              </Suspense>
-            </AuthProvider>
-          </PrimeReactProvider>
+          <AuthProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Main />
+            </Suspense>
+          </AuthProvider>
         </Provider>
       </QueryClientProvider>
     </BrowserRouter>

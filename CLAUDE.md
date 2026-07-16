@@ -54,18 +54,29 @@ com.nntan041299.englishmasterservice
 │   ├── entity/                # BaseEntity (auditing base class)
 │   ├── exception/             # GlobalExceptionHandler
 │   └── util/                  # StringUtils
+├── meaning/                   # Word meaning domain
+│   ├── dto/                   # MeaningAiResponse
+│   ├── entity/                # Meaning, PartOfSpeech
+│   └── repository/            # MeaningRepository
+├── practice/                  # Practice domain
+│   ├── checker/               # AnswerChecker (interface), SingleChoiceAnswerChecker, AnswerCheckerFactory
+│   ├── controller/            # PracticeController
+│   ├── dto/                   # PracticeResponse, AnswerPracticeRequest/Response, PracticeAiResponse
+│   ├── entity/                # Practice, PracticeOption, PracticeType, UserPractice, UserPracticeResult,
+│   │                          #   LearningTracking, converters
+│   ├── job/                   # WordTranslationPracticeGenerationJob, PracticeAssignmentJob
+│   ├── repository/            # PracticeRepository, UserPracticeRepository, UserPracticeResultRepository
+│   └── service/               # PracticeService, SingleChoicePracticeGenerationService (interface)
+│       └── impl/              # WordTranslationPracticeGenerationService
 ├── security/                  # JWT filter, SecurityConfig, token blacklist
-└── word/                      # Core vocabulary domain
-    ├── controller/            # WordController, PracticeController
-    ├── dto/                   # Word/Practice request-response DTOs
-    ├── entity/                # Word, Meaning, UserWord, Practice, UserPractice, etc.
-    ├── job/                   # Scheduled jobs (Spring @Scheduled)
-    │   ├── WordEnrichmentJob              # Enriches words via AI
-    │   ├── WordMeaningPracticeGenerationJob  # Generates practice exercises via AI
-    │   └── PracticeAssignmentJob          # Assigns practices to users
+└── word/                      # Word domain
+    ├── controller/            # WordController
+    ├── dto/                   # SaveWordRequest, WordResponse, WordMeaningResponse, DashboardResponse
+    ├── entity/                # Word, UserWord, LearningLevel
+    ├── job/                   # WordEnrichmentJob
     ├── mapper/                # WordMapper
-    ├── repository/            # JPA repositories
-    └── service/               # WordService, PracticeService
+    ├── repository/            # WordRepository, UserWordRepository, WordAvgPoint
+    └── service/               # WordService
 ```
 
 **Database Migrations (Flyway)**
@@ -80,6 +91,7 @@ com.nntan041299.englishmasterservice
 | V0.00.00.6 | practices |
 | V0.00.00.7 | user_practices |
 | V0.00.00.8 | user_practice_results |
+| V0.00.00.16 | practices.practice_type column |
 
 ---
 
@@ -92,7 +104,7 @@ com.nntan041299.englishmasterservice
 - Redux Toolkit + React Redux (global state)
 - TanStack React Query (server state / data fetching)
 - Axios (HTTP client)
-- PrimeReact + PrimeIcons (UI component library)
+- PrimeIcons (icon library)
 - React Router DOM v6
 - ESLint + Prettier + Husky (code quality)
 
@@ -100,7 +112,7 @@ com.nntan041299.englishmasterservice
 
 ```
 src/
-├── components/        # Shared UI components (Header, SideBar, Loading, PageLoader, AuthHero, PasswordField)
+├── components/        # Shared UI components (Header, SideBar, Loading, PageLoader, AuthHero, PasswordField, EmptyState, CircleProgress, LevelBadge)
 ├── config/            # API base URL config
 ├── context/           # AuthProvider (React context)
 ├── hook/              # Custom hooks (useLogin, useRegister, usePractice, useGoogleLoginCallBack, useClickOutside)

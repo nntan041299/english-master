@@ -1,6 +1,6 @@
 package com.nntan041299.englishmasterservice.word.dto;
 
-import com.nntan041299.englishmasterservice.word.entity.PartOfSpeech;
+import com.nntan041299.englishmasterservice.meaning.entity.PartOfSpeech;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

@@ -1,58 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/layouts/Layout";
+import CircleProgress from "@/components/CircleProgress";
+import EmptyState from "@/components/EmptyState";
 import { usePractices, useAnswerPractice } from "@/hook/usePractice";
 import type { PracticeItem, PracticeOption } from "@/service/practice";
 
 type AnswerState = "idle" | "correct" | "wrong";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
-
-function CircleProgress({
-  current,
-  total,
-}: {
-  current: number;
-  total: number;
-}) {
-  const r = 20;
-  const circ = 2 * Math.PI * r;
-  const pct = total > 0 ? current / total : 0;
-  const dash = circ * pct;
-
-  return (
-    <div className="relative flex items-center justify-center w-14 h-14">
-      <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90">
-        <circle
-          cx="28"
-          cy="28"
-          r={r}
-          fill="none"
-          stroke="#E5E7EB"
-          strokeWidth="3"
-        />
-        <circle
-          cx="28"
-          cy="28"
-          r={r}
-          fill="none"
-          stroke="#C9934A"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${circ}`}
-          style={{ transition: "stroke-dasharray 0.4s ease" }}
-        />
-      </svg>
-      <span
-        className="absolute text-xs font-semibold text-surface-700"
-        style={{ fontFamily: "var(--font-sans)" }}
-      >
-        {current}
-        <span className="text-surface-400">/{total}</span>
-      </span>
-    </div>
-  );
-}
 
 function OptionButton({
   option,
@@ -210,24 +166,12 @@ export default function Practice() {
   if (error) {
     return (
       <Layout>
-        <div className="h-full flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <i className="pi pi-exclamation-triangle text-3xl text-error-400" />
-            <p
-              className="text-sm text-surface-600"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Failed to load practice. Check your connection and try again.
-            </p>
-            <button
-              onClick={() => refetch()}
-              className="px-4 py-2 rounded-lg bg-ink-900 text-parchment text-sm font-medium cursor-pointer border-none hover:bg-ink-800 transition-colors"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Try again
-            </button>
-          </div>
-        </div>
+        <EmptyState
+          icon="pi-exclamation-triangle"
+          title="Something went wrong"
+          description="Failed to load practice. Check your connection and try again."
+          action={{ label: "Try again", onClick: () => refetch() }}
+        />
       </Layout>
     );
   }
@@ -235,33 +179,15 @@ export default function Practice() {
   if (total === 0) {
     return (
       <Layout>
-        <div className="h-full flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 text-center max-w-sm px-6">
-            <div className="w-14 h-14 rounded-full bg-surface-100 flex items-center justify-center">
-              <i className="pi pi-check-circle text-2xl text-surface-400" />
-            </div>
-            <h2
-              className="text-xl font-bold text-surface-900"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              All caught up
-            </h2>
-            <p
-              className="text-sm text-surface-500"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              No words to practice right now. Add more words to your vocabulary
-              and come back.
-            </p>
-            <button
-              onClick={() => navigate("/vocabulary")}
-              className="px-5 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Go to Vocabulary
-            </button>
-          </div>
-        </div>
+        <EmptyState
+          icon="pi-check-circle"
+          title="All caught up"
+          description="No words to practice right now. Add more words to your vocabulary and come back."
+          action={{
+            label: "Go to Vocabulary",
+            onClick: () => navigate("/vocabulary"),
+          }}
+        />
       </Layout>
     );
   }

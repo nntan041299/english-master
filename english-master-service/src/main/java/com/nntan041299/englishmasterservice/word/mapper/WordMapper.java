@@ -4,7 +4,7 @@ import com.nntan041299.englishmasterservice.common.util.StringUtils;
 import com.nntan041299.englishmasterservice.word.dto.WordMeaningResponse;
 import com.nntan041299.englishmasterservice.word.dto.WordResponse;
 import com.nntan041299.englishmasterservice.word.entity.LearningLevel;
-import com.nntan041299.englishmasterservice.word.entity.Meaning;
+import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import com.nntan041299.englishmasterservice.word.entity.UserWord;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

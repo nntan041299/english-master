@@ -1,4 +1,4 @@
-import { UnknownAction } from "redux";
+import { UnknownAction } from "@reduxjs/toolkit";
 import * as actionTypes from "./types";
 
 export interface UserState {

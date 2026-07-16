@@ -4,6 +4,7 @@ import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
 import com.nntan041299.englishmasterservice.common.util.StringUtils;
 import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
+import com.nntan041299.englishmasterservice.practice.checker.AnswerCheckerFactory;
 import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeRequest;
 import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeResponse;
 import com.nntan041299.englishmasterservice.practice.dto.PracticeResponse;
@@ -28,6 +29,7 @@ public class PracticeService {
     private final UserPracticeRepository userPracticeRepository;
     private final PracticeRepository practiceRepository;
     private final UserPracticeResultRepository userPracticeResultRepository;
+    private final AnswerCheckerFactory answerCheckerFactory;
     private final CurrentUserProvider currentUserProvider;
 
     @Transactional(readOnly = true)
@@ -68,7 +70,8 @@ public class PracticeService {
                 .findByUserIdAndPracticeId(currentUser.getId(), practice.getId())
                 .orElseThrow(() -> new EntityNotFoundException("UserPractice not found for user " + currentUser.getId() + " and practice " + practice.getId()));
 
-        boolean correct = practice.getCorrectAnswer().equals(request.selectedOptionIds());
+        boolean correct = answerCheckerFactory.get(practice.getPracticeType())
+                .isCorrect(practice.getCorrectAnswer(), request.selectedOptionIds());
 
         userPracticeResultRepository.save(UserPracticeResult.builder()
                 .user(currentUser)

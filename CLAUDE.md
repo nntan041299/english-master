@@ -59,13 +59,15 @@ com.nntan041299.englishmasterservice
 │   ├── entity/                # Meaning, PartOfSpeech
 │   └── repository/            # MeaningRepository
 ├── practice/                  # Practice domain
+│   ├── checker/               # AnswerChecker (interface), SingleChoiceAnswerChecker, AnswerCheckerFactory
 │   ├── controller/            # PracticeController
 │   ├── dto/                   # PracticeResponse, AnswerPracticeRequest/Response, PracticeAiResponse
-│   ├── entity/                # Practice, PracticeOption, UserPractice, UserPracticeResult,
+│   ├── entity/                # Practice, PracticeOption, PracticeType, UserPractice, UserPracticeResult,
 │   │                          #   LearningTracking, converters
-│   ├── job/                   # WordMeaningPracticeGenerationJob, PracticeAssignmentJob
+│   ├── job/                   # WordTranslationPracticeGenerationJob, PracticeAssignmentJob
 │   ├── repository/            # PracticeRepository, UserPracticeRepository, UserPracticeResultRepository
-│   └── service/               # PracticeService
+│   └── service/               # PracticeService, SingleChoicePracticeGenerationService (interface)
+│       └── impl/              # WordTranslationPracticeGenerationService
 ├── security/                  # JWT filter, SecurityConfig, token blacklist
 └── word/                      # Word domain
     ├── controller/            # WordController
@@ -89,6 +91,7 @@ com.nntan041299.englishmasterservice
 | V0.00.00.6 | practices |
 | V0.00.00.7 | user_practices |
 | V0.00.00.8 | user_practice_results |
+| V0.00.00.16 | practices.practice_type column |
 
 ---
 

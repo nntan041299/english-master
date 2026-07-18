@@ -5,10 +5,7 @@ import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
 import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository;
-import com.nntan041299.englishmasterservice.practice.dto.PracticeAiResponse;
-import com.nntan041299.englishmasterservice.practice.dto.PracticeAiResponse.PracticeItem;
 import com.nntan041299.englishmasterservice.practice.entity.Practice;
-import com.nntan041299.englishmasterservice.practice.entity.PracticeType;
 import com.nntan041299.englishmasterservice.practice.repository.PracticeRepository;
 import com.nntan041299.englishmasterservice.practice.service.PracticeGenerationService;
 import java.util.ArrayList;
@@ -21,15 +18,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Base implementation for single-choice practice generators. Subclasses only declare their
- * {@link com.nntan041299.englishmasterservice.practice.entity.PracticeCreationSource} and the AI
- * prompt to use; the shared batching, AI call, response mapping and persistence live here.
+ * Base implementation for AI-driven practice generators, independent of the concrete
+ * {@link com.nntan041299.englishmasterservice.practice.entity.PracticeType}. It owns the shared flow:
+ * pick a batch of meanings that still lack practices for this source, build the prompt, call the AI
+ * and persist the produced practices.
+ *
+ * <p>Subclasses supply the practice type, creation source and prompt, plus the response type to
+ * deserialize into and how to turn one response element into {@link Practice} entities.
+ *
+ * @param <R> the AI response element type for this generator
  */
 @Slf4j
-public abstract class AbstractPracticeGenerationService implements PracticeGenerationService {
+public abstract class AbstractPracticeGenerationService<R> implements PracticeGenerationService {
 
-    private static final int BATCH_SIZE = 1;
-    private static final int PRACTICES_PER_MEANING = 10;
+    protected static final int BATCH_SIZE = 1;
+    protected static final int PRACTICES_PER_MEANING = 10;
 
     private final MeaningRepository meaningRepository;
     private final PracticeRepository practiceRepository;
@@ -47,13 +50,14 @@ public abstract class AbstractPracticeGenerationService implements PracticeGener
         this.aiPromptManager = aiPromptManager;
     }
 
-    /** The prompt template used to ask the AI for practices; must contain two {@code %d} slots and one {@code %s}. */
+    /** The prompt template used to ask the AI for practices. */
     protected abstract AiPromptKey getPromptKey();
 
-    @Override
-    public PracticeType getType() {
-        return PracticeType.SINGLE_CHOICE;
-    }
+    /** Array type the AI response is deserialized into (e.g. {@code MyResponse[].class}). */
+    protected abstract Class<R[]> getResponseType();
+
+    /** Maps one AI response element into practices for the given meaning batch. */
+    protected abstract List<Practice> mapResponse(R response, List<Meaning> meanings, String logPrefix);
 
     @Override
     @Transactional
@@ -67,57 +71,41 @@ public abstract class AbstractPracticeGenerationService implements PracticeGener
             return;
         }
 
-        String meaningList = IntStream.range(0, meanings.size())
+        String prompt = buildPrompt(meanings);
+
+        R[] responses;
+        try {
+            responses = aiService.generateContent(prompt, getResponseType());
+        } catch (Exception ex) {
+            log.error("{} ai_error error={}", logPrefix, ex.getMessage(), ex);
+            return;
+        }
+
+        List<Practice> practices = Arrays.stream(responses)
+                .flatMap(response -> mapResponse(response, meanings, logPrefix).stream())
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        practiceRepository.saveAll(practices);
+        log.info("{} total_saved={}", logPrefix, practices.size());
+    }
+
+    /**
+     * Builds the prompt for a meaning batch. The default fills the shared template with the requested
+     * practice count (twice) and the formatted meaning list; override for a template with other args.
+     */
+    protected String buildPrompt(List<Meaning> meanings) {
+        return aiPromptManager.get(getPromptKey())
+                .formatted(PRACTICES_PER_MEANING, PRACTICES_PER_MEANING, formatMeanings(meanings));
+    }
+
+    /** Renders the meaning batch as an indexed, prompt-friendly list. */
+    protected String formatMeanings(List<Meaning> meanings) {
+        return IntStream.range(0, meanings.size())
                 .mapToObj(i -> {
                     Meaning m = meanings.get(i);
                     return "[%d] word=%s partOfSpeech=%s meaning=%s"
                             .formatted(i, m.getWord().getText(), m.getPartOfSpeech().name(), m.getMeaning());
                 })
                 .collect(Collectors.joining("; "));
-
-        String prompt = aiPromptManager.get(getPromptKey())
-                .formatted(PRACTICES_PER_MEANING, PRACTICES_PER_MEANING, meaningList);
-
-        PracticeAiResponse[] responses;
-        try {
-            responses = aiService.generateContent(prompt, PracticeAiResponse[].class);
-        } catch (Exception ex) {
-            log.error("{} ai_error error={}", logPrefix, ex.getMessage(), ex);
-            return;
-        }
-
-        List<Practice> practices = new ArrayList<>();
-
-        Arrays.stream(responses).forEach(response -> {
-            int idx = response.index();
-            if (idx < 0 || idx >= meanings.size()) {
-                log.warn("{} unknown_index index={}", logPrefix, idx);
-                return;
-            }
-
-            Meaning meaning = meanings.get(idx);
-            List<PracticeItem> items = response.practices();
-            if (items == null || items.isEmpty()) {
-                log.warn("{} empty_practices index={}", logPrefix, idx);
-                return;
-            }
-
-            items.stream()
-                    .filter(item -> item.options() != null && !item.options().isEmpty() && item.correctAnswer() != null)
-                    .map(item -> Practice.builder()
-                            .meaning(meaning)
-                            .practiceType(getType())
-                            .creationSource(getSource())
-                            .question(item.question())
-                            .options(item.options())
-                            .correctAnswer(item.correctAnswer())
-                            .build())
-                    .forEach(practices::add);
-
-            log.info("{} word={} count={}", logPrefix, meaning.getWord().getText(), items.size());
-        });
-
-        practiceRepository.saveAll(practices);
-        log.info("{} total_saved={}", logPrefix, practices.size());
     }
 }

@@ -9,7 +9,7 @@ import com.nntan041299.englishmasterservice.practice.repository.PracticeReposito
 import org.springframework.stereotype.Service;
 
 @Service
-public class WordTranslationPracticeGenerationService extends AbstractPracticeGenerationService {
+public class WordTranslationPracticeGenerationService extends AbstractSingleChoicePracticeGenerationService {
 
     public WordTranslationPracticeGenerationService(
             MeaningRepository meaningRepository,

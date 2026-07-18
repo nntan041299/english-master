@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class WordTranslationPracticeGenerationService implements PracticeGenerationService {
+public class SynonymPracticeGenerationService implements PracticeGenerationService {
 
     private static final int BATCH_SIZE = 1;
     private static final int PRACTICES_PER_MEANING = 10;
@@ -43,7 +43,7 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
 
     @Override
     public PracticeCreationSource getSource() {
-        return PracticeCreationSource.WORD_TRANSLATION;
+        return PracticeCreationSource.SYNONYM;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
         List<Meaning> meanings =
                 meaningRepository.findMeaningsWithoutPracticesForSource(getSource(), PageRequest.of(0, BATCH_SIZE));
         if (meanings.isEmpty()) {
-            log.debug("word_translation_practice_generation no_meanings_to_process");
+            log.debug("synonym_practice_generation no_meanings_to_process");
             return;
         }
 
@@ -64,14 +64,14 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
                 })
                 .collect(Collectors.joining("; "));
 
-        String prompt = aiPromptManager.get(AiPromptKey.WORD_TRANSLATION_PRACTICE_GENERATION)
+        String prompt = aiPromptManager.get(AiPromptKey.SYNONYM_PRACTICE_GENERATION)
                 .formatted(PRACTICES_PER_MEANING, PRACTICES_PER_MEANING, meaningList);
 
         PracticeAiResponse[] responses;
         try {
             responses = aiService.generateContent(prompt, PracticeAiResponse[].class);
         } catch (Exception ex) {
-            log.error("word_translation_practice_generation ai_error error={}", ex.getMessage(), ex);
+            log.error("synonym_practice_generation ai_error error={}", ex.getMessage(), ex);
             return;
         }
 
@@ -80,14 +80,14 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
         Arrays.stream(responses).forEach(response -> {
             int idx = response.index();
             if (idx < 0 || idx >= meanings.size()) {
-                log.warn("word_translation_practice_generation unknown_index index={}", idx);
+                log.warn("synonym_practice_generation unknown_index index={}", idx);
                 return;
             }
 
             Meaning meaning = meanings.get(idx);
             List<PracticeItem> items = response.practices();
             if (items == null || items.isEmpty()) {
-                log.warn("word_translation_practice_generation empty_practices index={}", idx);
+                log.warn("synonym_practice_generation empty_practices index={}", idx);
                 return;
             }
 
@@ -103,10 +103,10 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
                             .build())
                     .forEach(practices::add);
 
-            log.info("word_translation_practice_generation word={} count={}", meaning.getWord().getText(), items.size());
+            log.info("synonym_practice_generation word={} count={}", meaning.getWord().getText(), items.size());
         });
 
         practiceRepository.saveAll(practices);
-        log.info("word_translation_practice_generation total_saved={}", practices.size());
+        log.info("synonym_practice_generation total_saved={}", practices.size());
     }
 }

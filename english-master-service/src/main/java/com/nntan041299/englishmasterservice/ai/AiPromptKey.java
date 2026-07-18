@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum AiPromptKey {
 
     WORD_ENRICHMENT("word.enrichment.prompt"),
-    WORD_TRANSLATION_PRACTICE_GENERATION("word.translation.practice.generation.prompt");
+    WORD_TRANSLATION_PRACTICE_GENERATION("word.translation.practice.generation.prompt"),
+    SYNONYM_PRACTICE_GENERATION("synonym.practice.generation.prompt");
 
     private final String propertyKey;
 }

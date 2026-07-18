@@ -10,9 +10,9 @@ import com.nntan041299.englishmasterservice.practice.repository.PracticeReposito
 import org.springframework.stereotype.Service;
 
 @Service
-public class WordTranslationPracticeGenerationService extends AbstractPracticeGenerationService {
+public class SynonymPracticeGenerationService extends AbstractPracticeGenerationService {
 
-    public WordTranslationPracticeGenerationService(
+    public SynonymPracticeGenerationService(
             MeaningRepository meaningRepository,
             PracticeRepository practiceRepository,
             AIService aiService,
@@ -27,11 +27,11 @@ public class WordTranslationPracticeGenerationService extends AbstractPracticeGe
 
     @Override
     public PracticeCreationSource getSource() {
-        return PracticeCreationSource.WORD_TRANSLATION;
+        return PracticeCreationSource.SYNONYM;
     }
 
     @Override
     protected AiPromptKey getPromptKey() {
-        return AiPromptKey.WORD_TRANSLATION_PRACTICE_GENERATION;
+        return AiPromptKey.SYNONYM_PRACTICE_GENERATION;
     }
 }

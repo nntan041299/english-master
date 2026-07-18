@@ -50,6 +50,17 @@ jobs:
           push: true
           tags: ${{ steps.pom.outputs.image_name }}:${{ steps.pom.outputs.version }}
 
+      - name: Trigger Render deploy
+        run: |
+          if [ -z "${{ secrets.RENDER_API_KEY }}" ] || [ -z "${{ secrets.RENDER_SERVICE_ID }}" ]; then
+            echo "::error::RENDER_API_KEY and/or RENDER_SERVICE_ID secret is not set — cannot trigger Render deploy"
+            exit 1
+          fi
+          curl -fsS -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"imageUrl\": \"${{ env.REGISTRY }}/${{ steps.pom.outputs.image_name }}:${{ steps.pom.outputs.version }}\"}"
+
   bump-version:
     name: Bump pom.xml version on develop
     runs-on: ubuntu-latest

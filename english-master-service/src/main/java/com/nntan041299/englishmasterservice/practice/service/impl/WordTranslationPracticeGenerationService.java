@@ -8,6 +8,7 @@ import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository
 import com.nntan041299.englishmasterservice.practice.dto.PracticeAiResponse;
 import com.nntan041299.englishmasterservice.practice.dto.PracticeAiResponse.PracticeItem;
 import com.nntan041299.englishmasterservice.practice.entity.Practice;
+import com.nntan041299.englishmasterservice.practice.entity.PracticeCreationSource;
 import com.nntan041299.englishmasterservice.practice.entity.PracticeType;
 import com.nntan041299.englishmasterservice.practice.repository.PracticeRepository;
 import com.nntan041299.englishmasterservice.practice.service.PracticeGenerationService;
@@ -38,6 +39,11 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
     @Override
     public PracticeType getType() {
         return PracticeType.SINGLE_CHOICE;
+    }
+
+    @Override
+    public PracticeCreationSource getSource() {
+        return PracticeCreationSource.WORD_TRANSLATION;
     }
 
     @Override
@@ -89,6 +95,7 @@ public class WordTranslationPracticeGenerationService implements PracticeGenerat
                     .map(item -> Practice.builder()
                             .meaning(meaning)
                             .practiceType(getType())
+                            .creationSource(getSource())
                             .question(item.question())
                             .options(item.options())
                             .correctAnswer(item.correctAnswer())

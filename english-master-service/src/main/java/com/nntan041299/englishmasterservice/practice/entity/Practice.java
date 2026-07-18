@@ -42,6 +42,10 @@ public class Practice extends BaseEntity {
     @Column(name = "practice_type", nullable = false, length = 30)
     private PracticeType practiceType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "creation_source", nullable = false, length = 30)
+    private PracticeCreationSource creationSource;
+
     @Convert(converter = PracticeOptionListConverter.class)
     @Column(name = "options", nullable = false, columnDefinition = "TEXT")
     private List<PracticeOption> options;

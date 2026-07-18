@@ -2,7 +2,6 @@ package com.nntan041299.englishmasterservice.word.entity;
 
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -41,8 +40,4 @@ public class UserWord extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "word_id", nullable = false)
     private Word word;
-
-    @Column(name = "practices_assigned", nullable = false)
-    @Builder.Default
-    private boolean practicesAssigned = false;
 }

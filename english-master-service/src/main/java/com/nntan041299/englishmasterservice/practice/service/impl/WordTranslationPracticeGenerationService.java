@@ -4,12 +4,13 @@ import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
 import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
+import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository;
 import com.nntan041299.englishmasterservice.practice.dto.PracticeAiResponse;
 import com.nntan041299.englishmasterservice.practice.dto.PracticeAiResponse.PracticeItem;
 import com.nntan041299.englishmasterservice.practice.entity.Practice;
 import com.nntan041299.englishmasterservice.practice.entity.PracticeType;
 import com.nntan041299.englishmasterservice.practice.repository.PracticeRepository;
-import com.nntan041299.englishmasterservice.practice.service.SingleChoicePracticeGenerationService;
+import com.nntan041299.englishmasterservice.practice.service.PracticeGenerationService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,18 +18,20 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class WordTranslationPracticeGenerationService implements SingleChoicePracticeGenerationService {
+public class WordTranslationPracticeGenerationService implements PracticeGenerationService {
 
+    private static final int BATCH_SIZE = 1;
     private static final int PRACTICES_PER_MEANING = 10;
 
+    private final MeaningRepository meaningRepository;
     private final PracticeRepository practiceRepository;
-
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
 
@@ -39,7 +42,13 @@ public class WordTranslationPracticeGenerationService implements SingleChoicePra
 
     @Override
     @Transactional
-    public void generate(List<Meaning> meanings) {
+    public void generate() {
+        List<Meaning> meanings = meaningRepository.findMeaningsWithoutPractices(PageRequest.of(0, BATCH_SIZE));
+        if (meanings.isEmpty()) {
+            log.debug("word_translation_practice_generation no_meanings_to_process");
+            return;
+        }
+
         String meaningList = IntStream.range(0, meanings.size())
                 .mapToObj(i -> {
                     Meaning m = meanings.get(i);

@@ -1,0 +1,108 @@
+name: Tag on Merge to Main
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  changes:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'english-master-service/**'
+            frontend:
+              - 'english-master-ui/**'
+
+  tag-backend:
+    name: Tag Backend Release
+    needs: changes
+    if: github.event.pull_request.merged == true && needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Build & test
+        working-directory: english-master-service
+        run: mvn clean install
+
+      - name: Extract version from pom.xml
+        id: version
+        working-directory: english-master-service
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=${VERSION%-SNAPSHOT}" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "backend/v${{ steps.version.outputs.version }}"
+          git push origin "backend/v${{ steps.version.outputs.version }}"
+
+  tag-frontend:
+    name: Tag Frontend Release
+    needs: changes
+    if: github.event.pull_request.merged == true && needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: english-master-ui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: english-master-ui
+        run: npm ci
+
+      - name: Lint
+        working-directory: english-master-ui
+        run: npm run lint
+
+      - name: Format check
+        working-directory: english-master-ui
+        run: npm run format:check
+
+      - name: Build
+        working-directory: english-master-ui
+        run: npm run build
+
+      - name: Extract version from package.json
+        id: version
+        working-directory: english-master-ui
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "frontend/v${{ steps.version.outputs.version }}"
+          git push origin "frontend/v${{ steps.version.outputs.version }}"

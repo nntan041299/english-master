@@ -5,11 +5,12 @@ import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
 import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository;
 import com.nntan041299.englishmasterservice.practice.entity.PracticeCreationSource;
+import com.nntan041299.englishmasterservice.practice.entity.PracticeType;
 import com.nntan041299.englishmasterservice.practice.repository.PracticeRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class WordTranslationPracticeGenerationService extends AbstractSingleChoicePracticeGenerationService {
+public class WordTranslationPracticeGenerationService extends AbstractPracticeGenerationService {
 
     public WordTranslationPracticeGenerationService(
             MeaningRepository meaningRepository,
@@ -20,12 +21,17 @@ public class WordTranslationPracticeGenerationService extends AbstractSingleChoi
     }
 
     @Override
-    protected AiPromptKey getPromptKey() {
-        return AiPromptKey.WORD_TRANSLATION_PRACTICE_GENERATION;
+    public PracticeType getType() {
+        return PracticeType.SINGLE_CHOICE;
     }
 
     @Override
     public PracticeCreationSource getSource() {
         return PracticeCreationSource.WORD_TRANSLATION;
+    }
+
+    @Override
+    protected AiPromptKey getPromptKey() {
+        return AiPromptKey.WORD_TRANSLATION_PRACTICE_GENERATION;
     }
 }

@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.practice.repository;
 
+import com.nntan041299.englishmasterservice.practice.dto.MissingPracticeAssignment;
 import com.nntan041299.englishmasterservice.practice.entity.LearningTracking;
 import com.nntan041299.englishmasterservice.practice.entity.UserPractice;
 import com.nntan041299.englishmasterservice.word.repository.WordAvgPoint;
@@ -12,6 +13,28 @@ import org.springframework.data.repository.query.Param;
 public interface UserPracticeRepository extends JpaRepository<UserPractice, Long> {
 
     Optional<UserPractice> findByUserIdAndPracticeId(Long userId, Long practiceId);
+
+    /**
+     * Finds the practices a user is missing per creation source. For every word a user has saved,
+     * each of its meanings should have one assigned practice per creation source. This returns every
+     * practice belonging to a {@code (user, meaning, creationSource)} group where the user has no
+     * assignment yet, so the caller can pick one candidate at random per group.
+     */
+    @Query("""
+            SELECT new com.nntan041299.englishmasterservice.practice.dto.MissingPracticeAssignment(
+                uw.user.id, p.id, m.id, p.creationSource)
+            FROM UserWord uw
+            JOIN uw.word w
+            JOIN w.meanings m
+            JOIN Practice p ON p.meaning = m
+            WHERE NOT EXISTS (
+                SELECT 1 FROM UserPractice up
+                WHERE up.user.id = uw.user.id
+                  AND up.practice.meaning = m
+                  AND up.practice.creationSource = p.creationSource
+            )
+            """)
+    List<MissingPracticeAssignment> findMissingAssignments();
 
     @Query("""
             SELECT m.word.id AS wordId, AVG(up.learningTracking) AS avgPoint

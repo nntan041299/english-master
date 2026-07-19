@@ -31,7 +31,7 @@ public class TranslationService {
 
     /** Target sentence length (in words) to generate, same for every CEFR level. */
     private static final int SENTENCE_MIN_WORDS = 8;
-    private static final int SENTENCE_MAX_WORDS = 12;
+    private static final int SENTENCE_MAX_WORDS = 22;
 
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;

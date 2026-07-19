@@ -21,4 +21,12 @@ public interface ListeningChallengeRepository extends JpaRepository<ListeningCha
             """)
     List<ListeningChallenge> findAvailableForUser(
             @Param("level") LanguageLevel level, @Param("userId") Long userId, Pageable pageable);
+
+    /** Counts challenges at this level that have no submission yet, from any user. */
+    @Query("""
+            SELECT COUNT(c) FROM ListeningChallenge c
+            WHERE c.level = :level
+              AND NOT EXISTS (SELECT 1 FROM ListeningSubmission s WHERE s.challenge = c)
+            """)
+    long countUnsubmittedByLevel(@Param("level") LanguageLevel level);
 }

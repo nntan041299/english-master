@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,10 +58,24 @@ public class WritingService {
     private final WritingChallengeRepository challengeRepository;
     private final WritingSubmissionRepository submissionRepository;
 
-    /** Generates a fresh AI writing challenge for the current user at their own language level and stores it. */
+    /**
+     * Returns a writing challenge for the current user to answer. Reuses an existing challenge the
+     * user hasn't submitted an answer for yet, if one exists, instead of spending an AI call generating
+     * one that would just replace it unused. Only generates a fresh one via the AI when no such
+     * unanswered challenge exists.
+     */
     @Transactional
     public WritingChallengeResponse generateChallenge() {
         User user = currentUserProvider.getCurrentUser();
+
+        List<WritingChallenge> unsubmitted =
+                challengeRepository.findUnsubmittedByUserId(user.getId(), PageRequest.of(0, 1));
+        if (!unsubmitted.isEmpty()) {
+            WritingChallenge existing = unsubmitted.getFirst();
+            log.info("writing_challenge_reused user={} challenge={}", user.getId(), existing.getId());
+            return toResponse(existing);
+        }
+
         LanguageLevel level = user.getLanguageLevel();
         WordRange range = wordRangeFor(level);
 
@@ -77,8 +92,7 @@ public class WritingService {
 
         log.info("writing_challenge_generated user={} level={} min_words={} max_words={} challenge={}",
                 user.getId(), level, range.min(), range.max(), challenge.getId());
-        return new WritingChallengeResponse(
-                challenge.getId(), challenge.getLevel(), range.min(), range.max(), challenge.getTitle(), challenge.getPrompt());
+        return toResponse(challenge);
     }
 
     /** Sends the user's writing to the AI for feedback, persists the submission and returns the feedback. */
@@ -127,6 +141,12 @@ public class WritingService {
                 submission.getOverallFeedback(),
                 submission.getScore(),
                 issues.stream().map(WritingIssueResponse::from).toList());
+    }
+
+    private WritingChallengeResponse toResponse(WritingChallenge challenge) {
+        WordRange range = wordRangeFor(challenge.getLevel());
+        return new WritingChallengeResponse(
+                challenge.getId(), challenge.getLevel(), range.min(), range.max(), challenge.getTitle(), challenge.getPrompt());
     }
 
     private WordRange wordRangeFor(LanguageLevel level) {

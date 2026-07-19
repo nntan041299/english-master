@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.auth.dto;
 
+import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.auth.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -29,4 +30,7 @@ public class CreateUserRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
+
+    @NotNull(message = "Language level is required")
+    private LanguageLevel languageLevel;
 }

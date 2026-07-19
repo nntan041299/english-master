@@ -6,6 +6,7 @@ import com.nntan041299.englishmasterservice.auth.dto.GoogleToken;
 import com.nntan041299.englishmasterservice.auth.dto.GoogleTokenRequest;
 import com.nntan041299.englishmasterservice.auth.dto.GoogleUserInfo;
 import com.nntan041299.englishmasterservice.auth.dto.TokenResponse;
+import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.auth.entity.Role;
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.repository.UserRepository;
@@ -113,6 +114,7 @@ public class GoogleOauth2Impl extends AbstractAuthenticationService implements I
                                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                                 .role(Role.USER)
                                 .isActive(true)
+                                .languageLevel(LanguageLevel.B1)
                                 .build()));
     }
 

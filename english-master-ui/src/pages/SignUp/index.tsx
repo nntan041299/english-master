@@ -5,6 +5,7 @@ import type { AxiosError } from "axios";
 import Loading from "@/components/Loading";
 import { getGoogleLoginUrl } from "@/service/auth";
 import { useRegister } from "@/hook/useRegister";
+import { LANGUAGE_LEVELS, type LanguageLevel } from "@/constants/languageLevel";
 
 interface SignupErrors {
   fullName: string;
@@ -22,6 +23,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [languageLevel, setLanguageLevel] = useState<LanguageLevel>("B1");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -76,7 +78,7 @@ const SignUp = () => {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!signupValidate()) return;
-    register({ fullName, username, email, password });
+    register({ fullName, username, email, password, languageLevel });
   }
 
   const clearError = (key: keyof SignupErrors) => {
@@ -181,6 +183,31 @@ const SignUp = () => {
               {signupErrors.email && (
                 <small className="form-field-error">{signupErrors.email}</small>
               )}
+            </label>
+
+            {/* Row 2b: Language level (CEFR) */}
+            <label className="block">
+              <span className="form-label">Your English level</span>
+              <div className="relative">
+                <select
+                  value={languageLevel}
+                  onChange={(e) =>
+                    setLanguageLevel(e.target.value as LanguageLevel)
+                  }
+                  disabled={isPending}
+                  className="form-input pr-9"
+                >
+                  {LANGUAGE_LEVELS.map((l) => (
+                    <option key={l.value} value={l.value}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <i className="pi pi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-400 pointer-events-none" />
+              </div>
+              <small className="form-field-hint">
+                CEFR scale — not sure? B1 (Intermediate) is a good default.
+              </small>
             </label>
 
             {/* Row 3: Password + Confirm */}

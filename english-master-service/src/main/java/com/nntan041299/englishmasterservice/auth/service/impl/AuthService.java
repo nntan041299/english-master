@@ -66,6 +66,7 @@ public class AuthService extends AbstractAuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .isActive(true)
+                .languageLevel(request.getLanguageLevel())
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -89,6 +90,10 @@ public class AuthService extends AbstractAuthenticationService {
 
         if (StringUtils.hasText(request.getFullName())) {
             user.setFullName(request.getFullName());
+        }
+
+        if (request.getLanguageLevel() != null) {
+            user.setLanguageLevel(request.getLanguageLevel());
         }
 
         if (StringUtils.hasText(request.getNewPassword())) {

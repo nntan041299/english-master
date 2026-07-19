@@ -1,20 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/layouts/Layout";
 import EmptyState from "@/components/EmptyState";
 import { useGenerateChallenge, useSubmitWriting } from "@/hook/useWriting";
+import { selectUser } from "@/redux/user/selectors";
+import { languageLevelLabel } from "@/constants/languageLevel";
 import type {
   WritingChallenge,
   WritingFeedback,
   WritingIssue,
   WritingIssueType,
-  WritingLevel,
 } from "@/service/writing";
-
-const LEVELS: { value: WritingLevel; label: string }[] = [
-  { value: "BEGINNER", label: "Beginner" },
-  { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "ADVANCED", label: "Advanced" },
-];
 
 type Family = "error" | "gold" | "sage";
 
@@ -124,7 +121,8 @@ function scoreColor(score: number): string {
 }
 
 export default function Writing() {
-  const [level, setLevel] = useState<WritingLevel>("INTERMEDIATE");
+  const navigate = useNavigate();
+  const user = useSelector(selectUser);
   const [challenge, setChallenge] = useState<WritingChallenge | null>(null);
   const [text, setText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
@@ -134,25 +132,19 @@ export default function Writing() {
   const generate = useGenerateChallenge();
   const submit = useSubmitWriting();
 
-  const loadChallenge = (lvl: WritingLevel) => {
+  const loadChallenge = () => {
     setFeedback(null);
     setText("");
     setActiveIssue(null);
-    generate.mutate(lvl, { onSuccess: (c) => setChallenge(c) });
+    generate.mutate(undefined, { onSuccess: (c) => setChallenge(c) });
   };
 
   // Generate the first challenge on mount. State is already at its initial
   // values here, so we only kick off the mutation (no synchronous resets).
   useEffect(() => {
-    generate.mutate(level, { onSuccess: (c) => setChallenge(c) });
+    generate.mutate(undefined, { onSuccess: (c) => setChallenge(c) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleLevel = (lvl: WritingLevel) => {
-    if (lvl === level && challenge) return;
-    setLevel(lvl);
-    loadChallenge(lvl);
-  };
 
   const handleSubmit = () => {
     if (!challenge || !text.trim()) return;
@@ -199,23 +191,21 @@ export default function Writing() {
                 writing.
               </p>
             </div>
-            <div className="flex items-center gap-1 bg-surface-100 rounded-lg p-1">
-              {LEVELS.map((l) => (
-                <button
-                  key={l.value}
-                  onClick={() => handleLevel(l.value)}
-                  disabled={generate.isPending || submit.isPending}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
-                    level === l.value
-                      ? "bg-white text-ink-900 shadow-sm"
-                      : "text-surface-500 hover:text-surface-700"
-                  }`}
+            {user.languageLevel && (
+              <button
+                onClick={() => navigate("/account")}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-100 hover:bg-surface-200 transition-colors cursor-pointer"
+                title="Change your level in Account settings"
+              >
+                <span
+                  className="text-xs font-semibold text-surface-700"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  {l.label}
-                </button>
-              ))}
-            </div>
+                  {languageLevelLabel(user.languageLevel)}
+                </span>
+                <i className="pi pi-pencil text-[10px] text-surface-400" />
+              </button>
+            )}
           </div>
 
           {/* Challenge card */}
@@ -231,7 +221,7 @@ export default function Writing() {
                 Your challenge
               </span>
               <button
-                onClick={() => loadChallenge(level)}
+                onClick={() => loadChallenge()}
                 disabled={generate.isPending || submit.isPending}
                 className="text-xs font-medium text-surface-500 hover:text-ink-900 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 style={{ fontFamily: "var(--font-sans)" }}
@@ -258,7 +248,7 @@ export default function Writing() {
                 icon="pi-exclamation-triangle"
                 title="Couldn't generate a challenge"
                 description="Something went wrong reaching the AI. Please try again."
-                action={{ label: "Retry", onClick: () => loadChallenge(level) }}
+                action={{ label: "Retry", onClick: () => loadChallenge() }}
               />
             ) : challenge ? (
               <>
@@ -487,7 +477,7 @@ export default function Writing() {
                   Edit my writing
                 </button>
                 <button
-                  onClick={() => loadChallenge(level)}
+                  onClick={() => loadChallenge()}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >

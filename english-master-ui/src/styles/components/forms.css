@@ -47,6 +47,13 @@
     color: var(--color-error-500);
   }
 
+  /* ── Field hint message ── */
+  .form-field-hint {
+    @apply block text-[0.6875rem] mt-0.5;
+    font-family: var(--font-sans);
+    color: var(--color-text-muted);
+  }
+
   /* ── Two-column field pair ── */
   .form-row {
     @apply grid grid-cols-2 gap-3;

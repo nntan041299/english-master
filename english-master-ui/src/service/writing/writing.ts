@@ -1,6 +1,5 @@
+import type { LanguageLevel } from "@/constants/languageLevel";
 import { request, ENDPOINT } from "@/rest";
-
-export type WritingLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 
 export type WritingIssueType =
   | "GRAMMAR"
@@ -14,7 +13,7 @@ export type WritingIssueType =
 
 export interface WritingChallenge {
   id: number;
-  level: WritingLevel;
+  level: LanguageLevel;
   title: string;
   prompt: string;
 }
@@ -38,11 +37,10 @@ export interface SubmitWritingRequest {
   text: string;
 }
 
-export const getWritingChallenge = async (
-  level: WritingLevel,
-): Promise<WritingChallenge> => {
+/** Generates a challenge at the current user's own language level (set on their account). */
+export const getWritingChallenge = async (): Promise<WritingChallenge> => {
   const response = await request.get({
-    path: `${ENDPOINT.WRITING}/challenge?level=${level}`,
+    path: `${ENDPOINT.WRITING}/challenge`,
   });
   return response.data.data;
 };

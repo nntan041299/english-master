@@ -3,7 +3,6 @@ package com.nntan041299.englishmasterservice.listening.service;
 import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
-import com.nntan041299.englishmasterservice.ai.SpeechAIService;
 import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.listening.dto.ListeningChallengeAiResponse;
 import com.nntan041299.englishmasterservice.listening.entity.ListeningChallenge;
@@ -42,7 +41,6 @@ public class ListeningPracticeGenerationService {
             LanguageLevel.C2, new SentenceLength(15, 22)));
 
     private final AIService aiService;
-    private final SpeechAIService speechAIService;
     private final AiPromptManager aiPromptManager;
     private final ListeningChallengeRepository challengeRepository;
     private final ListeningVoiceGenerationStatsRepository statsRepository;
@@ -74,7 +72,7 @@ public class ListeningPracticeGenerationService {
 
         byte[] voiceData;
         try {
-            voiceData = speechAIService.synthesizeSpeechWav(aiResponse.sentence());
+            voiceData = aiService.synthesizeSpeechWav(aiResponse.sentence());
         } catch (Exception ex) {
             log.error("listening_practice_generation voice_ai_error error={}", ex.getMessage(), ex);
             return;

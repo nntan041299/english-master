@@ -15,4 +15,9 @@ public interface AIService {
      * @return the generated content as an instance of {@code responseType}
      */
     <T> T generateContent(String prompt, Class<T> responseType);
+
+    /**
+     * Synthesizes the given text as speech and returns it as playable WAV audio bytes.
+     */
+    byte[] synthesizeSpeechWav(String text);
 }

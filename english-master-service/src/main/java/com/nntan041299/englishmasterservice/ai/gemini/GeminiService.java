@@ -2,7 +2,6 @@ package com.nntan041299.englishmasterservice.ai.gemini;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nntan041299.englishmasterservice.ai.AIService;
-import com.nntan041299.englishmasterservice.ai.SpeechAIService;
 import com.nntan041299.englishmasterservice.ai.WavEncoder;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiContent;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiGenerationConfig;
@@ -23,13 +22,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * {@link AIService} / {@link SpeechAIService} implementation backed by the Gemini Generative
- * Language API (generativelanguage.googleapis.com) — no separate Google Cloud product involved.
+ * {@link AIService} implementation backed by the Gemini Generative Language API
+ * (generativelanguage.googleapis.com) — no separate Google Cloud product involved.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GeminiService implements AIService, SpeechAIService {
+public class GeminiService implements AIService {
 
     private static final Pattern SAMPLE_RATE_PATTERN = Pattern.compile("rate=(\\d+)");
     private static final int DEFAULT_SAMPLE_RATE = 24000;
@@ -58,9 +57,9 @@ public class GeminiService implements AIService, SpeechAIService {
 
         GeminiResponse response = geminiClient.generateContent(model, apiKey, request);
 
-        String text = response.getCandidates().get(0)
+        String text = response.getCandidates().getFirst()
                 .getContent()
-                .getParts().get(0)
+                .getParts().getFirst()
                 .getText();
 
         text = text.replaceAll("```[a-zA-Z]*\\n?", "").replaceAll("```", "").trim();

@@ -89,6 +89,7 @@ listening:
   practice:
     generation:
       cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
+      max-voice-requests: ${LISTENING_MAX_VOICE_REQUESTS:0}
 
 word:
   enrichment:

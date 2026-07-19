@@ -13,6 +13,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
  * to serve on demand, instead of calling the AI synchronously when a user opens the Listening page.
  *
  * <p>Voice generation is the scarce resource here (limited by the free tier), so it is hard-capped at
- * {@link #MAX_VOICE_REQUESTS} lifetime calls, tracked in {@link ListeningVoiceGenerationStats}. Once
- * the cap is reached, this simply stops generating new challenges.
+ * {@link #maxVoiceRequests} lifetime calls, tracked in {@link ListeningVoiceGenerationStats}. Once the
+ * cap is reached, this simply stops generating new challenges. The cap defaults to 0 (generation
+ * effectively disabled) until explicitly raised via configuration.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ListeningPracticeGenerationService {
-
-    static final int MAX_VOICE_REQUESTS = 2;
 
     /** Target sentence length (in words) to generate per CEFR level, so difficulty scales with level. */
     private static final Map<LanguageLevel, SentenceLength> SENTENCE_LENGTH_BY_LEVEL = new EnumMap<>(Map.of(
@@ -45,12 +45,15 @@ public class ListeningPracticeGenerationService {
     private final ListeningChallengeRepository challengeRepository;
     private final ListeningVoiceGenerationStatsRepository statsRepository;
 
+    @Value("${listening.practice.generation.max-voice-requests}")
+    private int maxVoiceRequests;
+
     @Transactional
     public void generate() {
         ListeningVoiceGenerationStats stats = statsRepository.findFirstByOrderByIdAsc()
                 .orElseThrow(() -> new IllegalStateException("listening_voice_generation_stats row is missing"));
 
-        if (stats.getRequestCount() >= MAX_VOICE_REQUESTS) {
+        if (stats.getRequestCount() >= maxVoiceRequests) {
             log.info("listening_practice_generation skipped reason=voice_request_limit_reached count={}",
                     stats.getRequestCount());
             return;

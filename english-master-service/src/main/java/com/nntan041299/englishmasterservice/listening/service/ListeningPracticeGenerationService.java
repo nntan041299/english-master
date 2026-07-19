@@ -9,8 +9,6 @@ import com.nntan041299.englishmasterservice.listening.entity.ListeningChallenge;
 import com.nntan041299.englishmasterservice.listening.entity.ListeningVoiceGenerationStats;
 import com.nntan041299.englishmasterservice.listening.repository.ListeningChallengeRepository;
 import com.nntan041299.englishmasterservice.listening.repository.ListeningVoiceGenerationStatsRepository;
-import java.util.EnumMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,14 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ListeningPracticeGenerationService {
 
-    /** Target sentence length (in words) to generate per CEFR level, so difficulty scales with level. */
-    private static final Map<LanguageLevel, SentenceLength> SENTENCE_LENGTH_BY_LEVEL = new EnumMap<>(Map.of(
-            LanguageLevel.A1, new SentenceLength(4, 6),
-            LanguageLevel.A2, new SentenceLength(6, 9),
-            LanguageLevel.B1, new SentenceLength(8, 12),
-            LanguageLevel.B2, new SentenceLength(10, 15),
-            LanguageLevel.C1, new SentenceLength(12, 18),
-            LanguageLevel.C2, new SentenceLength(15, 22)));
+    /** Target sentence length (in words) to generate, same for every CEFR level. */
+    private static final int SENTENCE_MIN_WORDS = 8;
+    private static final int SENTENCE_MAX_WORDS = 12;
 
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
@@ -60,10 +53,9 @@ public class ListeningPracticeGenerationService {
         }
 
         LanguageLevel level = pickLevel();
-        SentenceLength length = SENTENCE_LENGTH_BY_LEVEL.get(level);
 
         String prompt = aiPromptManager.get(AiPromptKey.LISTENING_CHALLENGE_GENERATION)
-                .formatted(level.name(), length.min(), length.max());
+                .formatted(level.name(), SENTENCE_MIN_WORDS, SENTENCE_MAX_WORDS);
 
         ListeningChallengeAiResponse aiResponse;
         try {
@@ -100,7 +92,4 @@ public class ListeningPracticeGenerationService {
         long total = challengeRepository.count();
         return levels[(int) (total % levels.length)];
     }
-
-    /** Target sentence length band (in words) for a CEFR level. */
-    private record SentenceLength(int min, int max) {}
 }

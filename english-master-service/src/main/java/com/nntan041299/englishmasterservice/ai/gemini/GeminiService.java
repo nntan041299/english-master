@@ -35,6 +35,7 @@ public class GeminiService implements AIService {
     private static final int MONO = 1;
 
     private final GeminiClient geminiClient;
+    private final GeminiBetaClient geminiBetaClient;
     private final ObjectMapper objectMapper;
 
     @Value("${gemini.api-key}")
@@ -88,7 +89,7 @@ public class GeminiService implements AIService {
                         .build())
                 .build();
 
-        GeminiResponse response = geminiClient.generateContent(ttsModel, apiKey, request);
+        GeminiResponse response = geminiBetaClient.generateContent(ttsModel, apiKey, request);
 
         GeminiInlineData audio = response.getCandidates().get(0)
                 .getContent()

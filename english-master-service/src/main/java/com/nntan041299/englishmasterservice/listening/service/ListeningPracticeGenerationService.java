@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ListeningPracticeGenerationService {
 
-    static final int MAX_VOICE_REQUESTS = 10;
+    static final int MAX_VOICE_REQUESTS = 2;
 
     /** Target sentence length (in words) to generate per CEFR level, so difficulty scales with level. */
     private static final Map<LanguageLevel, SentenceLength> SENTENCE_LENGTH_BY_LEVEL = new EnumMap<>(Map.of(

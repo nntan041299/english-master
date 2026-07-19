@@ -33,8 +33,13 @@ public class ListeningController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    /** Streams back the challenge's pre-synthesized WAV audio. */
-    @GetMapping(value = "/{challengeId}/audio", produces = "audio/wav")
+    /**
+     * Streams back the challenge's pre-synthesized WAV audio. No "produces" restriction here — the
+     * frontend's axios client sends {@code Accept: application/json} by default, which would fail
+     * content negotiation against a fixed audio/wav mapping. The content type is set explicitly on
+     * the response instead.
+     */
+    @GetMapping("/{challengeId}/audio")
     public ResponseEntity<byte[]> getAudio(@PathVariable Long challengeId) {
         byte[] audio = listeningService.getAudio(challengeId);
         return ResponseEntity.ok()

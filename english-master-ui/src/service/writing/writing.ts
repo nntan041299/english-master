@@ -14,6 +14,8 @@ export type WritingIssueType =
 export interface WritingChallenge {
   id: number;
   level: LanguageLevel;
+  minWords: number;
+  maxWords: number;
   title: string;
   prompt: string;
 }
@@ -37,7 +39,10 @@ export interface SubmitWritingRequest {
   text: string;
 }
 
-/** Generates a challenge at the current user's own language level (set on their account). */
+/**
+ * Generates a challenge at the current user's own language level (set on their account). The target
+ * word count range is decided by the backend and comes back on the response — nothing to send here.
+ */
 export const getWritingChallenge = async (): Promise<WritingChallenge> => {
   const response = await request.get({
     path: `${ENDPOINT.WRITING}/challenge`,

@@ -20,7 +20,9 @@ import com.nntan041299.englishmasterservice.writing.repository.WritingChallengeR
 import com.nntan041299.englishmasterservice.writing.repository.WritingSubmissionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,19 @@ public class WritingService {
             .map(Enum::name)
             .collect(Collectors.joining(", "));
 
+    /**
+     * Target word count band per CEFR level. Defined here (not client input, not persisted) so it can
+     * be recomputed from a challenge's stored {@link LanguageLevel} at any time, including when the
+     * user later submits their writing.
+     */
+    private static final Map<LanguageLevel, WordRange> WORD_RANGES_BY_LEVEL = new EnumMap<>(Map.of(
+            LanguageLevel.A1, new WordRange(20, 40),
+            LanguageLevel.A2, new WordRange(40, 60),
+            LanguageLevel.B1, new WordRange(60, 90),
+            LanguageLevel.B2, new WordRange(90, 130),
+            LanguageLevel.C1, new WordRange(130, 180),
+            LanguageLevel.C2, new WordRange(180, 250)));
+
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
     private final CurrentUserProvider currentUserProvider;
@@ -47,8 +62,10 @@ public class WritingService {
     public WritingChallengeResponse generateChallenge() {
         User user = currentUserProvider.getCurrentUser();
         LanguageLevel level = user.getLanguageLevel();
+        WordRange range = wordRangeFor(level);
 
-        String prompt = aiPromptManager.get(AiPromptKey.WRITING_CHALLENGE_GENERATION).formatted(level.name());
+        String prompt = aiPromptManager.get(AiPromptKey.WRITING_CHALLENGE_GENERATION)
+                .formatted(level.name(), range.min(), range.max());
         WritingChallengeAiResponse aiResponse = aiService.generateContent(prompt, WritingChallengeAiResponse.class);
 
         WritingChallenge challenge = challengeRepository.save(WritingChallenge.builder()
@@ -58,9 +75,10 @@ public class WritingService {
                 .prompt(aiResponse.prompt())
                 .build());
 
-        log.info("writing_challenge_generated user={} level={} challenge={}", user.getId(), level, challenge.getId());
+        log.info("writing_challenge_generated user={} level={} min_words={} max_words={} challenge={}",
+                user.getId(), level, range.min(), range.max(), challenge.getId());
         return new WritingChallengeResponse(
-                challenge.getId(), challenge.getLevel(), challenge.getTitle(), challenge.getPrompt());
+                challenge.getId(), challenge.getLevel(), range.min(), range.max(), challenge.getTitle(), challenge.getPrompt());
     }
 
     /** Sends the user's writing to the AI for feedback, persists the submission and returns the feedback. */
@@ -71,8 +89,23 @@ public class WritingService {
         WritingChallenge challenge = challengeRepository.findByIdAndUserId(request.challengeId(), user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Writing challenge not found: " + request.challengeId()));
 
+        WordRange range = wordRangeFor(challenge.getLevel());
+        int wordCount = countWords(request.text());
+        if (wordCount < range.min() || wordCount > range.max()) {
+            throw new IllegalArgumentException(
+                    "Your response has %d words; this challenge requires between %d and %d words."
+                            .formatted(wordCount, range.min(), range.max()));
+        }
+
         String prompt = aiPromptManager.get(AiPromptKey.WRITING_FEEDBACK)
-                .formatted(challenge.getLevel().name(), challenge.getPrompt(), request.text(), ISSUE_TYPES);
+                .formatted(
+                        challenge.getLevel().name(),
+                        range.min(),
+                        range.max(),
+                        challenge.getPrompt(),
+                        request.text(),
+                        ISSUE_TYPES,
+                        wordCount);
         WritingFeedbackAiResponse aiResponse = aiService.generateContent(prompt, WritingFeedbackAiResponse.class);
 
         List<WritingIssue> issues = toIssues(aiResponse);
@@ -96,6 +129,20 @@ public class WritingService {
                 issues.stream().map(WritingIssueResponse::from).toList());
     }
 
+    private WordRange wordRangeFor(LanguageLevel level) {
+        return WORD_RANGES_BY_LEVEL.get(level);
+    }
+
+    /** Counts words the same way the UI does: whitespace-separated tokens, ignoring empty ones. */
+    private int countWords(String text) {
+        if (text == null || text.isBlank()) {
+            return 0;
+        }
+        return (int) Arrays.stream(text.trim().split("\\s+"))
+                .filter(w -> !w.isEmpty())
+                .count();
+    }
+
     private List<WritingIssue> toIssues(WritingFeedbackAiResponse ai) {
         if (ai.issues() == null) {
             return List.of();
@@ -109,4 +156,7 @@ public class WritingService {
                         issue.type() == null ? WritingIssueType.OTHER : issue.type()))
                 .toList();
     }
+
+    /** Target word count band for a CEFR level. */
+    private record WordRange(int min, int max) {}
 }

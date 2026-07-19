@@ -20,7 +20,10 @@ public class WritingController {
 
     private final WritingService writingService;
 
-    /** Generates a challenge at the current user's own language level (set on their account). */
+    /**
+     * Generates a challenge at the current user's own language level. The target word count range is
+     * decided by the backend (from the level) and returned in the response — the client has no say in it.
+     */
     @GetMapping("/challenge")
     public ResponseEntity<WritingChallengeResponse> getChallenge() {
         return ResponseEntity.ok(writingService.generateChallenge());

@@ -1,4 +1,8 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  InternalAxiosRequestConfig,
+  ResponseType,
+} from "axios";
 import { API_BASE_URL } from "@/config/serverApiConfig";
 import { ENDPOINT } from "./endpoint";
 
@@ -6,6 +10,7 @@ interface RequestParams {
   path: string;
   body?: Record<string, unknown>;
   headers?: Record<string, string>;
+  responseType?: ResponseType;
 }
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -128,8 +133,11 @@ axios.interceptors.response.use(
 );
 
 export const request = {
-  get: async ({ path }: Pick<RequestParams, "path">) => {
-    return await axios.get(path);
+  get: async ({
+    path,
+    responseType,
+  }: Pick<RequestParams, "path" | "responseType">) => {
+    return await axios.get(path, { responseType });
   },
 
   post: async ({ path, body, headers }: RequestParams) => {

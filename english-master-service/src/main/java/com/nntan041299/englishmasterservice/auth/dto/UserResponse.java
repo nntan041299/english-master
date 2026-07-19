@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.auth.dto;
 
+import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.auth.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,4 +15,5 @@ public class UserResponse {
     private String fullName;
     private Role role;
     private boolean active;
+    private LanguageLevel languageLevel;
 }

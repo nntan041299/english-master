@@ -1,4 +1,5 @@
 import { UnknownAction } from "@reduxjs/toolkit";
+import type { LanguageLevel } from "@/constants/languageLevel";
 import * as actionTypes from "./types";
 
 export interface UserState {
@@ -8,6 +9,7 @@ export interface UserState {
   firstName: string | undefined;
   lastName: string | undefined;
   avatarUrl: string | undefined;
+  languageLevel: LanguageLevel | undefined;
 }
 
 interface UserInfoRetrieveSuccessAction {
@@ -24,6 +26,7 @@ const INITIAL_STATE: UserState = {
   firstName: undefined,
   lastName: undefined,
   avatarUrl: undefined,
+  languageLevel: undefined,
 };
 
 const userReducer = (
@@ -40,6 +43,7 @@ const userReducer = (
         firstName: payload.firstName,
         lastName: payload.lastName,
         avatarUrl: payload.avatarUrl,
+        languageLevel: payload.languageLevel,
       };
     }
     default:

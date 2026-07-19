@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.auth.dto;
 
+import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,8 @@ public class UpdateUserRequest {
 
     @Size(max = 100, message = "Full name must not exceed 100 characters")
     private String fullName;
+
+    private LanguageLevel languageLevel;
 
     private String currentPassword;
 

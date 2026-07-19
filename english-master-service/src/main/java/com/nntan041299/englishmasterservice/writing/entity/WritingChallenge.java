@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.writing.entity;
 
+import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -38,7 +39,7 @@ public class WritingChallenge extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "level", nullable = false, length = 20)
-    private WritingLevel level;
+    private LanguageLevel level;
 
     @Column(name = "title", nullable = false)
     private String title;

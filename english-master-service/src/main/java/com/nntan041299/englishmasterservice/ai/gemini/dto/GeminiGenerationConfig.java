@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GeminiRequest {
-    private List<GeminiContent> contents;
-    private GeminiGenerationConfig generationConfig;
+public class GeminiGenerationConfig {
+    private List<String> responseModalities;
+    private GeminiSpeechConfig speechConfig;
 }

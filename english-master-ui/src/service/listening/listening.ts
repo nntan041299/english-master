@@ -19,15 +19,22 @@ export interface SubmitListeningRequest {
   transcript: string;
 }
 
-/** Generates a listening challenge at the current user's own language level (set on their account). */
-export const getListeningChallenge = async (): Promise<ListeningChallenge> => {
-  const response = await request.get({
-    path: `${ENDPOINT.LISTENING}/challenge`,
-  });
-  return response.data.data;
-};
+/**
+ * Fetches a listening challenge at the current user's own language level from the pre-generated
+ * pool. Returns null when none are available yet (backend responds 204 No Content).
+ */
+export const getListeningChallenge =
+  async (): Promise<ListeningChallenge | null> => {
+    const response = await request.get({
+      path: `${ENDPOINT.LISTENING}/challenge`,
+    });
+    if (response.status === 204) {
+      return null;
+    }
+    return response.data.data;
+  };
 
-/** Fetches the challenge's sentence synthesized as MP3 audio. */
+/** Fetches the challenge's pre-synthesized WAV audio. */
 export const getListeningAudio = async (challengeId: number): Promise<Blob> => {
   const response = await request.get({
     path: `${ENDPOINT.LISTENING}/${challengeId}/audio`,

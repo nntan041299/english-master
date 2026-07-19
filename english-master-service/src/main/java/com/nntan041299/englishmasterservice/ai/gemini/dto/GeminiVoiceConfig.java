@@ -1,4 +1,4 @@
-package com.nntan041299.englishmasterservice.ai.tts.dto;
+package com.nntan041299.englishmasterservice.ai.gemini.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +9,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AudioConfig {
-    private String audioEncoding;
+public class GeminiVoiceConfig {
+    private GeminiPrebuiltVoiceConfig prebuiltVoiceConfig;
 }

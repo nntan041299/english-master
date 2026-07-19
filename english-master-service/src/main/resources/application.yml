@@ -81,13 +81,13 @@ gemini:
   api-key: ${GEMINI_API_KEY}
   base-url: https://generativelanguage.googleapis.com/v1
   model: gemini-3.1-flash-lite
+  tts-model: ${GEMINI_TTS_MODEL:gemini-2.5-flash-preview-tts}
+  tts-voice-name: ${GEMINI_TTS_VOICE:Kore}
 
-google:
-  tts:
-    api-key: ${GOOGLE_TTS_API_KEY:${GEMINI_API_KEY}}
-    base-url: https://texttospeech.googleapis.com/v1
-    language-code: en-US
-    voice-name: en-US-Neural2-C
+listening:
+  practice:
+    generation:
+      cron: ${LISTENING_PRACTICE_GENERATION_CRON:0 0 * * * *}
 
 word:
   enrichment:

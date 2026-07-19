@@ -1,4 +1,4 @@
-package com.nntan041299.englishmasterservice.ai.tts.dto;
+package com.nntan041299.englishmasterservice.ai.gemini.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TextToSpeechResponse {
-    /** Base64-encoded audio bytes in the encoding requested (MP3). */
-    private String audioContent;
+public class GeminiInlineData {
+    private String mimeType;
+    /** Base64-encoded raw audio bytes (PCM for the TTS model). */
+    private String data;
 }

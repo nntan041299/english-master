@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import type { AxiosError } from "axios";
 import Layout from "@/layouts/Layout";
+import EmptyState from "@/components/EmptyState";
 import {
   useGenerateListeningChallenge,
   usePlayListeningAudio,
@@ -19,6 +20,7 @@ export default function Listening() {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
   const [challenge, setChallenge] = useState<ListeningChallenge | null>(null);
+  const [noPracticeAvailable, setNoPracticeAvailable] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [feedback, setFeedback] = useState<ListeningFeedback | null>(null);
   const [submitError, setSubmitError] = useState("");
@@ -40,18 +42,24 @@ export default function Listening() {
     setIsSpeaking(false);
   };
 
+  const handleChallengeLoaded = (c: ListeningChallenge | null) => {
+    setChallenge(c);
+    setNoPracticeAvailable(c === null);
+  };
+
   const loadChallenge = () => {
     setFeedback(null);
     setTranscript("");
     setSubmitError("");
     setPlaybackError("");
+    setNoPracticeAvailable(false);
     stopAudio();
-    generate.mutate(undefined, { onSuccess: (c) => setChallenge(c) });
+    generate.mutate(undefined, { onSuccess: handleChallengeLoaded });
   };
 
   // Load the first challenge on mount.
   useEffect(() => {
-    generate.mutate(undefined, { onSuccess: (c) => setChallenge(c) });
+    generate.mutate(undefined, { onSuccess: handleChallengeLoaded });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,6 +109,19 @@ export default function Listening() {
       },
     );
   };
+
+  if (noPracticeAvailable && !generate.isPending) {
+    return (
+      <Layout>
+        <EmptyState
+          icon="pi-volume-off"
+          title="No listening practice yet"
+          description="New sentences are added periodically. Please check back soon."
+          action={{ label: "Check again", onClick: loadChallenge }}
+        />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

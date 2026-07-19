@@ -22,18 +22,23 @@ public class ListeningController {
 
     private final ListeningService listeningService;
 
-    /** Generates a challenge at the current user's own language level. */
+    /**
+     * Returns a challenge at the current user's own language level from the pre-generated pool, or
+     * 204 No Content if none are available yet.
+     */
     @GetMapping("/challenge")
     public ResponseEntity<ListeningChallengeResponse> getChallenge() {
-        return ResponseEntity.ok(listeningService.generateChallenge());
+        return listeningService.getChallenge()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    /** Streams back the challenge's sentence synthesized as MP3 audio. */
-    @GetMapping(value = "/{challengeId}/audio", produces = "audio/mpeg")
+    /** Streams back the challenge's pre-synthesized WAV audio. */
+    @GetMapping(value = "/{challengeId}/audio", produces = "audio/wav")
     public ResponseEntity<byte[]> getAudio(@PathVariable Long challengeId) {
-        byte[] audio = listeningService.synthesizeAudio(challengeId);
+        byte[] audio = listeningService.getAudio(challengeId);
         return ResponseEntity.ok()
-                .contentType(MediaType.valueOf("audio/mpeg"))
+                .contentType(MediaType.valueOf("audio/wav"))
                 .body(audio);
     }
 

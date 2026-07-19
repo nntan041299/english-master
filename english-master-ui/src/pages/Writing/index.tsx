@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
 import Layout from "@/layouts/Layout";
-import EmptyState from "@/components/EmptyState";
 import { useGenerateChallenge, useSubmitWriting } from "@/hook/useWriting";
 import { selectUser } from "@/redux/user/selectors";
 import { languageLevelLabel } from "@/constants/languageLevel";
@@ -120,6 +120,12 @@ function scoreColor(score: number): string {
   return "text-error-500";
 }
 
+function wordCountColor(count: number, min: number, max: number): string {
+  if (count < min) return "text-surface-400";
+  if (count > max) return "text-gold-600";
+  return "text-sage-600";
+}
+
 export default function Writing() {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
@@ -128,6 +134,7 @@ export default function Writing() {
   const [submittedText, setSubmittedText] = useState("");
   const [feedback, setFeedback] = useState<WritingFeedback | null>(null);
   const [activeIssue, setActiveIssue] = useState<number | null>(null);
+  const [submitError, setSubmitError] = useState("");
 
   const generate = useGenerateChallenge();
   const submit = useSubmitWriting();
@@ -135,6 +142,7 @@ export default function Writing() {
   const loadChallenge = () => {
     setFeedback(null);
     setText("");
+    setSubmitError("");
     setActiveIssue(null);
     generate.mutate(undefined, { onSuccess: (c) => setChallenge(c) });
   };
@@ -149,12 +157,20 @@ export default function Writing() {
   const handleSubmit = () => {
     if (!challenge || !text.trim()) return;
     const trimmed = text.trim();
+    setSubmitError("");
     submit.mutate(
       { challengeId: challenge.id, text: trimmed },
       {
         onSuccess: (f) => {
           setSubmittedText(trimmed);
           setFeedback(f);
+        },
+        onError: (err) => {
+          const apiError = err as AxiosError<{ data: { message?: string } }>;
+          setSubmitError(
+            apiError.response?.data?.data?.message ||
+              "Couldn’t get feedback right now. Please try again.",
+          );
         },
       },
     );
@@ -220,17 +236,27 @@ export default function Writing() {
               >
                 Your challenge
               </span>
-              <button
-                onClick={() => loadChallenge()}
-                disabled={generate.isPending || submit.isPending}
-                className="text-xs font-medium text-surface-500 hover:text-ink-900 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                <i
-                  className={`pi pi-refresh text-xs ${generate.isPending ? "pi-spin" : ""}`}
-                />
-                New challenge
-              </button>
+              <div className="flex items-center gap-3">
+                {challenge && (
+                  <span
+                    className="text-xs font-medium text-surface-400"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    Target: {challenge.minWords}–{challenge.maxWords} words
+                  </span>
+                )}
+                <button
+                  onClick={loadChallenge}
+                  disabled={generate.isPending || submit.isPending}
+                  className="text-xs font-medium text-surface-500 hover:text-ink-900 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  <i
+                    className={`pi pi-refresh text-xs ${generate.isPending ? "pi-spin" : ""}`}
+                  />
+                  New challenge
+                </button>
+              </div>
             </div>
 
             {generate.isPending ? (
@@ -244,12 +270,21 @@ export default function Writing() {
                 </span>
               </div>
             ) : generate.isError ? (
-              <EmptyState
-                icon="pi-exclamation-triangle"
-                title="Couldn't generate a challenge"
-                description="Something went wrong reaching the AI. Please try again."
-                action={{ label: "Retry", onClick: () => loadChallenge() }}
-              />
+              <div className="flex flex-col items-start gap-2 py-2">
+                <p
+                  className="text-sm text-error-500"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  Something went wrong reaching the AI. Please try again.
+                </p>
+                <button
+                  onClick={loadChallenge}
+                  className="text-xs font-semibold text-ink-900 underline cursor-pointer"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  Retry
+                </button>
+              </div>
             ) : challenge ? (
               <>
                 <h2
@@ -282,10 +317,10 @@ export default function Writing() {
               />
               <div className="flex items-center justify-between">
                 <span
-                  className="text-xs text-surface-400"
+                  className={`text-xs font-medium ${wordCountColor(wordCount, challenge.minWords, challenge.maxWords)}`}
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  {wordCount} {wordCount === 1 ? "word" : "words"}
+                  {wordCount} / {challenge.minWords}–{challenge.maxWords} words
                 </span>
                 <button
                   onClick={handleSubmit}
@@ -306,12 +341,12 @@ export default function Writing() {
                   )}
                 </button>
               </div>
-              {submit.isError && (
+              {submitError && (
                 <p
                   className="text-xs text-error-500"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  Couldn’t get feedback right now. Please try again.
+                  {submitError}
                 </p>
               )}
             </div>
@@ -477,7 +512,7 @@ export default function Writing() {
                   Edit my writing
                 </button>
                 <button
-                  onClick={() => loadChallenge()}
+                  onClick={loadChallenge}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >

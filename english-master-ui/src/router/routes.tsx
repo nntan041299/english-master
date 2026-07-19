@@ -8,6 +8,7 @@ const Vocabulary = lazy(() => import("@/pages/Vocabulary"));
 const Practice = lazy(() => import("@/pages/Practice"));
 const Writing = lazy(() => import("@/pages/Writing"));
 const Translation = lazy(() => import("@/pages/Translation"));
+const Listening = lazy(() => import("@/pages/Listening"));
 const Account = lazy(() => import("@/pages/Account"));
 
 const routes: Record<string, RouteObject[]> = {
@@ -31,6 +32,10 @@ const routes: Record<string, RouteObject[]> = {
     {
       path: "/translation",
       element: <Translation />,
+    },
+    {
+      path: "/listening",
+      element: <Listening />,
     },
     {
       path: "/account",

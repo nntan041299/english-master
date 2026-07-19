@@ -1,3 +1,4 @@
+import type { LanguageLevel } from "@/constants/languageLevel";
 import { API_BASE_URL } from "@/config/serverApiConfig";
 import { request, ENDPOINT } from "@/rest";
 
@@ -16,6 +17,7 @@ interface SignUpParams {
   email: string;
   password: string;
   fullName: string;
+  languageLevel: LanguageLevel;
 }
 
 export const login = async ({ username, password }: LoginParams) => {
@@ -46,10 +48,11 @@ export const signUp = async ({
   email,
   password,
   fullName,
+  languageLevel,
 }: SignUpParams) => {
   return await request.post({
     path: API_BASE_URL + ENDPOINT.SIGN_UP,
-    body: { username, email, password, fullName },
+    body: { username, email, password, fullName, languageLevel },
   });
 };
 

@@ -1,3 +1,4 @@
+import type { LanguageLevel } from "@/constants/languageLevel";
 import { request, ENDPOINT } from "@/rest";
 
 export const getUserInfo = async () => {
@@ -7,6 +8,7 @@ export const getUserInfo = async () => {
 export interface UpdateUserPayload {
   email?: string;
   fullName?: string;
+  languageLevel?: LanguageLevel;
   currentPassword?: string;
   newPassword?: string;
 }

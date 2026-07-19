@@ -6,10 +6,12 @@ import { setUserInfo } from "@/redux/user";
 import { updateUserInfo } from "@/service/user";
 import Layout from "@/layouts/Layout";
 import { AppDispatch } from "@/redux/store";
+import { LANGUAGE_LEVELS, type LanguageLevel } from "@/constants/languageLevel";
 
 interface FormState {
   fullName: string;
   email: string;
+  languageLevel: LanguageLevel;
 }
 
 interface PasswordFormState {
@@ -87,6 +89,26 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
+function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className="relative">
+      <select
+        {...props}
+        className={`
+          w-full appearance-none px-3.5 py-2.5 pr-9 rounded-xl border border-surface-200 text-sm text-surface-900
+          bg-white
+          focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:border-ink-900/40
+          disabled:bg-surface-50 disabled:text-surface-400
+          transition-all duration-150
+          ${props.className ?? ""}
+        `}
+        style={{ fontFamily: "var(--font-sans)" }}
+      />
+      <i className="pi pi-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-surface-400 pointer-events-none" />
+    </div>
+  );
+}
+
 function PasswordInput({
   value,
   onChange,
@@ -128,6 +150,7 @@ const Account = () => {
   const [profileForm, setProfileForm] = useState<FormState>(() => ({
     fullName: [user.firstName, user.lastName].filter(Boolean).join(" "),
     email: user.email ?? "",
+    languageLevel: user.languageLevel ?? "B1",
   }));
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
@@ -153,6 +176,7 @@ const Account = () => {
           firstName: parts[0] ?? "",
           lastName: parts.slice(1).join(" ") || undefined,
           avatarUrl: user.avatarUrl,
+          languageLevel: data.languageLevel,
         }),
       );
       setProfileSuccess("Profile updated.");
@@ -185,6 +209,17 @@ const Account = () => {
     setProfileForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
+  const handleLanguageLevelChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    setProfileError("");
+    setProfileSuccess("");
+    setProfileForm((p) => ({
+      ...p,
+      languageLevel: e.target.value as LanguageLevel,
+    }));
+  };
+
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setProfileError("");
@@ -195,6 +230,7 @@ const Account = () => {
     saveProfile({
       fullName: profileForm.fullName.trim(),
       email: profileForm.email.trim() || undefined,
+      languageLevel: profileForm.languageLevel,
     });
   };
 
@@ -305,6 +341,25 @@ const Account = () => {
                 onChange={handleProfileChange}
                 placeholder="Leave blank to keep current email"
               />
+            </Field>
+            <Field label="English level (CEFR)">
+              <Select
+                name="languageLevel"
+                value={profileForm.languageLevel}
+                onChange={handleLanguageLevelChange}
+              >
+                {LANGUAGE_LEVELS.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {l.label}
+                  </option>
+                ))}
+              </Select>
+              <p
+                className="text-xs text-surface-400 mt-1"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                Used to tailor your writing challenges and feedback.
+              </p>
             </Field>
 
             {profileError && (

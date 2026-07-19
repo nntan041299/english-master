@@ -3,6 +3,7 @@ package com.nntan041299.englishmasterservice.writing.service;
 import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
+import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
 import com.nntan041299.englishmasterservice.writing.dto.SubmitWritingRequest;
@@ -14,7 +15,6 @@ import com.nntan041299.englishmasterservice.writing.dto.WritingIssueResponse;
 import com.nntan041299.englishmasterservice.writing.entity.WritingChallenge;
 import com.nntan041299.englishmasterservice.writing.entity.WritingIssue;
 import com.nntan041299.englishmasterservice.writing.entity.WritingIssueType;
-import com.nntan041299.englishmasterservice.writing.entity.WritingLevel;
 import com.nntan041299.englishmasterservice.writing.entity.WritingSubmission;
 import com.nntan041299.englishmasterservice.writing.repository.WritingChallengeRepository;
 import com.nntan041299.englishmasterservice.writing.repository.WritingSubmissionRepository;
@@ -42,10 +42,11 @@ public class WritingService {
     private final WritingChallengeRepository challengeRepository;
     private final WritingSubmissionRepository submissionRepository;
 
-    /** Generates a fresh AI writing challenge for the current user at the given level and stores it. */
+    /** Generates a fresh AI writing challenge for the current user at their own language level and stores it. */
     @Transactional
-    public WritingChallengeResponse generateChallenge(WritingLevel level) {
+    public WritingChallengeResponse generateChallenge() {
         User user = currentUserProvider.getCurrentUser();
+        LanguageLevel level = user.getLanguageLevel();
 
         String prompt = aiPromptManager.get(AiPromptKey.WRITING_CHALLENGE_GENERATION).formatted(level.name());
         WritingChallengeAiResponse aiResponse = aiService.generateContent(prompt, WritingChallengeAiResponse.class);
@@ -71,7 +72,7 @@ public class WritingService {
                 .orElseThrow(() -> new EntityNotFoundException("Writing challenge not found: " + request.challengeId()));
 
         String prompt = aiPromptManager.get(AiPromptKey.WRITING_FEEDBACK)
-                .formatted(challenge.getPrompt(), request.text(), ISSUE_TYPES);
+                .formatted(challenge.getLevel().name(), challenge.getPrompt(), request.text(), ISSUE_TYPES);
         WritingFeedbackAiResponse aiResponse = aiService.generateContent(prompt, WritingFeedbackAiResponse.class);
 
         List<WritingIssue> issues = toIssues(aiResponse);

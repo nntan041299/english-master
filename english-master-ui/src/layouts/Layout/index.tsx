@@ -29,6 +29,7 @@ const Layout = ({ children }: LayoutProps) => {
             firstName: parts[0] ?? "",
             lastName: parts.slice(1).join(" ") || undefined,
             avatarUrl: data.avatarUrl,
+            languageLevel: data.languageLevel,
           }),
         );
       });

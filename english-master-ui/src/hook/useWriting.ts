@@ -1,13 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import {
-  getWritingChallenge,
-  submitWriting,
-  type WritingLevel,
-} from "@/service/writing";
+import { getWritingChallenge, submitWriting } from "@/service/writing";
 
 export const useGenerateChallenge = () =>
   useMutation({
-    mutationFn: (level: WritingLevel) => getWritingChallenge(level),
+    mutationFn: getWritingChallenge,
   });
 
 export const useSubmitWriting = () =>

@@ -9,4 +9,5 @@ export const ENDPOINT = {
   WORDS: "english-master-service/api/words",
   WORDS_DASHBOARD: "english-master-service/api/words/dashboard",
   PRACTICES: "english-master-service/api/practices",
+  WRITING: "english-master-service/api/writing",
 } as const;

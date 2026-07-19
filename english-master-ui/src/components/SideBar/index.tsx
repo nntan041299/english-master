@@ -15,6 +15,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/practice", label: "Practice", icon: "pi-pencil" },
   { path: "/writing", label: "Writing", icon: "pi-file-edit" },
   { path: "/translation", label: "Translation", icon: "pi-language" },
+  { path: "/listening", label: "Listening", icon: "pi-volume-up" },
 ];
 
 interface SideBarProps {

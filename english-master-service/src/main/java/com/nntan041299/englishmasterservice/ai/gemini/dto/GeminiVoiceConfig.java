@@ -1,8 +1,6 @@
 package com.nntan041299.englishmasterservice.ai.gemini.dto;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,8 +9,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class GeminiRequest {
-    private List<GeminiContent> contents;
-    private GeminiGenerationConfig generationConfig;
+public class GeminiVoiceConfig {
+    private GeminiPrebuiltVoiceConfig prebuiltVoiceConfig;
 }

@@ -11,4 +11,5 @@ export const ENDPOINT = {
   PRACTICES: "english-master-service/api/practices",
   WRITING: "english-master-service/api/writing",
   TRANSLATION: "english-master-service/api/translation",
+  LISTENING: "english-master-service/api/listening",
 } as const;

@@ -28,9 +28,7 @@ export const getListeningChallenge = async (): Promise<ListeningChallenge> => {
 };
 
 /** Fetches the challenge's sentence synthesized as MP3 audio. */
-export const getListeningAudio = async (
-  challengeId: number,
-): Promise<Blob> => {
+export const getListeningAudio = async (challengeId: number): Promise<Blob> => {
   const response = await request.get({
     path: `${ENDPOINT.LISTENING}/${challengeId}/audio`,
     responseType: "blob",

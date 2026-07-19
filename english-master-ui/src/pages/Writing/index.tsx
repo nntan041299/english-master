@@ -236,27 +236,14 @@ export default function Writing() {
               >
                 Your challenge
               </span>
-              <div className="flex items-center gap-3">
-                {challenge && (
-                  <span
-                    className="text-xs font-medium text-surface-400"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    Target: {challenge.minWords}–{challenge.maxWords} words
-                  </span>
-                )}
-                <button
-                  onClick={loadChallenge}
-                  disabled={generate.isPending || submit.isPending}
-                  className="text-xs font-medium text-surface-500 hover:text-ink-900 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              {challenge && (
+                <span
+                  className="text-xs font-medium text-surface-400"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  <i
-                    className={`pi pi-refresh text-xs ${generate.isPending ? "pi-spin" : ""}`}
-                  />
-                  New challenge
-                </button>
-              </div>
+                  Target: {challenge.minWords}–{challenge.maxWords} words
+                </span>
+              )}
             </div>
 
             {generate.isPending ? (
@@ -500,25 +487,16 @@ export default function Writing() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setFeedback(null);
-                    setActiveIssue(null);
-                  }}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-surface-200 bg-white text-surface-700 text-sm font-medium cursor-pointer hover:bg-surface-50 transition-colors"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  Edit my writing
-                </button>
-                <button
-                  onClick={loadChallenge}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  New challenge
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setFeedback(null);
+                  setActiveIssue(null);
+                }}
+                className="w-full px-4 py-2.5 rounded-lg border border-surface-200 bg-white text-surface-700 text-sm font-medium cursor-pointer hover:bg-surface-50 transition-colors"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                Edit my writing
+              </button>
             </div>
           )}
         </div>

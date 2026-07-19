@@ -59,24 +59,25 @@ public class WritingService {
     private final WritingSubmissionRepository submissionRepository;
 
     /**
-     * Returns a writing challenge for the current user to answer. Reuses an existing challenge the
-     * user hasn't submitted an answer for yet, if one exists, instead of spending an AI call generating
-     * one that would just replace it unused. Only generates a fresh one via the AI when no such
-     * unanswered challenge exists.
+     * Returns a writing challenge for the current user to answer. Reuses an existing challenge at the
+     * user's current language level that they haven't submitted an answer for yet, if one exists,
+     * instead of spending an AI call generating one that would just replace it unused. Only generates a
+     * fresh one via the AI when no such unanswered challenge exists (including when the user's level
+     * has changed since their last unanswered challenge was generated).
      */
     @Transactional
     public WritingChallengeResponse generateChallenge() {
         User user = currentUserProvider.getCurrentUser();
+        LanguageLevel level = user.getLanguageLevel();
 
-        List<WritingChallenge> unsubmitted =
-                challengeRepository.findUnsubmittedByUserId(user.getId(), PageRequest.of(0, 1));
+        List<WritingChallenge> unsubmitted = challengeRepository.findUnsubmittedByUserIdAndLevel(
+                user.getId(), level, PageRequest.of(0, 1));
         if (!unsubmitted.isEmpty()) {
             WritingChallenge existing = unsubmitted.getFirst();
-            log.info("writing_challenge_reused user={} challenge={}", user.getId(), existing.getId());
+            log.info("writing_challenge_reused user={} level={} challenge={}", user.getId(), level, existing.getId());
             return toResponse(existing);
         }
 
-        LanguageLevel level = user.getLanguageLevel();
         WordRange range = wordRangeFor(level);
 
         String prompt = aiPromptManager.get(AiPromptKey.WRITING_CHALLENGE_GENERATION)

@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -34,9 +35,16 @@ public class WordEnrichmentJob {
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
 
+    @Value("${word.enrichment.enabled}")
+    private boolean enabled;
+
     @Scheduled(cron = "${word.enrichment.cron}")
     @Transactional
     public void enrich() {
+        if (!enabled) {
+            return;
+        }
+
         log.info("word_enrichment_job started");
 
         List<Word> words = wordRepository.findWordsWithoutMeanings(PageRequest.of(0, BATCH_SIZE));

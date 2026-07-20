@@ -1,4 +1,4 @@
-package com.nntan041299.englishmasterservice.listening.entity;
+package com.nntan041299.englishmasterservice.ai.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,18 +14,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Counts how many AI voice-generation calls have been made per Gemini TTS model, so the caller can
- * stop using a model once its daily quota or requests-per-minute window is exhausted and fall back
- * to the next configured model. The RPM window is persisted (rather than kept in memory) so it
- * survives server restarts.
+ * Counts how many AI calls have been made per Gemini model, so the caller can stop using a model
+ * once its daily quota or requests-per-minute window is exhausted and fall back to the next
+ * configured model. Both windows are persisted (rather than kept in memory) so they survive server
+ * restarts.
  */
 @Entity
-@Table(name = "listening_voice_generation_stats")
+@Table(name = "ai_limit_stats")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListeningVoiceGenerationStats {
+public class AiLimitStats {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,8 +34,8 @@ public class ListeningVoiceGenerationStats {
     @Column(name = "model", nullable = false, unique = true)
     private String model;
 
-    @Column(name = "request_count", nullable = false)
-    private int requestCount;
+    @Column(name = "request_per_date_count", nullable = false)
+    private int requestPerDateCount;
 
     @Column(name = "request_count_date", nullable = false)
     private LocalDate requestCountDate;

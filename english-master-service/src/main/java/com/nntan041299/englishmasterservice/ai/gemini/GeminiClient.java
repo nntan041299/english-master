@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * Feign client for the Gemini Generative Language API.
  */
-@FeignClient(name = "gemini", url = "${gemini.base-url}")
+@FeignClient(name = "gemini", url = "${gemini.v1.base-url}")
 public interface GeminiClient {
 
     @PostMapping("/models/{model}:generateContent")

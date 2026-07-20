@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,9 @@ public class PracticeAssignmentJob {
     private final UserPracticeRepository userPracticeRepository;
     private final Random random = new Random();
 
+    @Value("${word.practice.assignment.enabled}")
+    private boolean enabled;
+
     /**
      * Ensures every user has one practice per creation source for each meaning of the words they
      * saved. The missing groups are computed in SQL; for each missing {@code (user, meaning, source)}
@@ -35,6 +39,10 @@ public class PracticeAssignmentJob {
     @Scheduled(cron = "${word.practice.assignment.cron}")
     @Transactional
     public void assign() {
+        if (!enabled) {
+            return;
+        }
+
         log.info("practice_assignment_job started");
 
         List<MissingPracticeAssignment> missing = userPracticeRepository.findMissingAssignments();

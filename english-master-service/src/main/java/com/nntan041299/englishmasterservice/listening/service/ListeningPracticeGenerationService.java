@@ -6,14 +6,13 @@ import com.nntan041299.englishmasterservice.ai.AiPromptManager;
 import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
 import com.nntan041299.englishmasterservice.listening.dto.ListeningChallengeAiResponse;
 import com.nntan041299.englishmasterservice.listening.entity.ListeningChallenge;
-import com.nntan041299.englishmasterservice.listening.entity.ListeningVoiceGenerationStats;
 import com.nntan041299.englishmasterservice.listening.repository.ListeningChallengeRepository;
-import com.nntan041299.englishmasterservice.listening.repository.ListeningVoiceGenerationStatsRepository;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Generates listening challenges (sentence + synthesized voice) in the background so they're ready
  * to serve on demand, instead of calling the AI synchronously when a user opens the Listening page.
  *
- * <p>Voice generation is the scarce resource here (limited by the free tier), so it is hard-capped at
- * {@link #maxVoiceRequests} lifetime calls, tracked in {@link ListeningVoiceGenerationStats}. Once the
- * cap is reached, this simply stops generating new challenges. The cap defaults to 0 (generation
- * effectively disabled) until explicitly raised via configuration.
+ * <p>Voice generation is the scarce resource here (limited by the free tier), so each configured
+ * Gemini TTS model is capped individually (see {@link com.nntan041299.englishmasterservice.ai.gemini.GeminiService}).
+ * Once every configured model is over quota, {@code synthesizeSpeechWav} throws and this job simply
+ * stops generating new challenges until quotas reset.
  */
 @Slf4j
 @Service
@@ -38,22 +37,21 @@ public class ListeningPracticeGenerationService {
     /** Each level keeps at most this many challenges with no submission yet, from any user. */
     private static final int MAX_UNSUBMITTED_PER_LEVEL = 5;
 
+    /** How long to back off after a voice-generation failure before the job runs again. */
+    private static final Duration VOICE_AI_ERROR_BACKOFF = Duration.ofMinutes(1);
+
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
     private final ListeningChallengeRepository challengeRepository;
-    private final ListeningVoiceGenerationStatsRepository statsRepository;
 
-    @Value("${listening.practice.generation.max-voice-requests}")
-    private int maxVoiceRequests;
+    /** Set after a voice-generation failure; the job skips runs until this instant passes. */
+    private volatile Instant retryAfter = Instant.MIN;
 
     @Transactional
     public void generate() {
-        ListeningVoiceGenerationStats stats = statsRepository.findFirstByOrderByIdAsc()
-                .orElseThrow(() -> new IllegalStateException("listening_voice_generation_stats row is missing"));
-
-        if (stats.getRequestCount() >= maxVoiceRequests) {
-            log.info("listening_practice_generation skipped reason=voice_request_limit_reached count={}",
-                    stats.getRequestCount());
+        if (Instant.now().isBefore(retryAfter)) {
+            log.info("listening_practice_generation skipped reason=backing_off_after_voice_ai_error retry_after={}",
+                    retryAfter);
             return;
         }
 
@@ -80,12 +78,11 @@ public class ListeningPracticeGenerationService {
         try {
             voiceData = aiService.synthesizeSpeechWav(aiResponse.sentence());
         } catch (Exception ex) {
-            log.error("listening_practice_generation voice_ai_error error={}", ex.getMessage(), ex);
+            retryAfter = Instant.now().plus(VOICE_AI_ERROR_BACKOFF);
+            log.error("listening_practice_generation voice_ai_error error={} retry_after={}",
+                    ex.getMessage(), retryAfter, ex);
             return;
         }
-
-        stats.setRequestCount(stats.getRequestCount() + 1);
-        statsRepository.save(stats);
 
         ListeningChallenge challenge = challengeRepository.save(ListeningChallenge.builder()
                 .level(level)
@@ -93,8 +90,7 @@ public class ListeningPracticeGenerationService {
                 .voiceData(voiceData)
                 .build());
 
-        log.info("listening_practice_generated level={} challenge={} voice_requests_used={}",
-                level, challenge.getId(), stats.getRequestCount());
+        log.info("listening_practice_generated level={} challenge={}", level, challenge.getId());
     }
 
     /**

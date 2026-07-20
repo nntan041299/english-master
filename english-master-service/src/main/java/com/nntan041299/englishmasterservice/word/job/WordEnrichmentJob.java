@@ -35,10 +35,10 @@ public class WordEnrichmentJob {
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
 
-    @Value("${word.enrichment.enabled}")
+    @Value("${job.word.enrichment.enabled}")
     private boolean enabled;
 
-    @Scheduled(cron = "${word.enrichment.cron}")
+    @Scheduled(cron = "${job.word.enrichment.cron}")
     @Transactional
     public void enrich() {
         if (!enabled) {

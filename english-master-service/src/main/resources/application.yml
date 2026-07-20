@@ -1,15 +1,14 @@
+# ---------------------------------------------------------------------------
+# Server
+# ---------------------------------------------------------------------------
 server:
   servlet:
     context-path: /english-master-service/api
   port: 8080
 
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-
+# ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
 db:
   host: ${DB_HOST}
   port: ${DB_PORT:5432}
@@ -17,6 +16,9 @@ db:
   username: ${DB_USERNAME}
   password: ${DB_PASSWORD}
 
+# ---------------------------------------------------------------------------
+# Spring
+# ---------------------------------------------------------------------------
 spring:
   application:
     name: english-master-service
@@ -57,6 +59,16 @@ spring:
             scope: profile email
             redirect-uri: ${GOOGLE_OAUTH2_REDIRECT_URL}
 
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+
+# ---------------------------------------------------------------------------
+# Auth / Security
+# ---------------------------------------------------------------------------
 allowed:
   urls: ${ALLOWED_ORIGIN:https://your-frontend-domain.com}
 
@@ -65,6 +77,13 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}    # 15 min
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
 
+token:
+  blacklist:
+    cleanup-interval-ms: ${TOKEN_BLACKLIST_CLEANUP_INTERVAL_MS:3600000} # 1 hour
+
+# ---------------------------------------------------------------------------
+# External clients
+# ---------------------------------------------------------------------------
 app:
   clients:
     googleUserInfo:
@@ -72,33 +91,42 @@ app:
     googleOauth2Api:
       url: https://oauth2.googleapis.com
 
-
-token:
-  blacklist:
-    cleanup-interval-ms: ${TOKEN_BLACKLIST_CLEANUP_INTERVAL_MS:3600000} # 1 hour
-
 gemini:
   api-key: ${GEMINI_API_KEY}
-  base-url: https://generativelanguage.googleapis.com/v1
-  base-beta-url: https://generativelanguage.googleapis.com/v1beta
-  model: gemini-3.1-flash-lite
-  tts-models: ${GEMINI_TTS_MODELS:gemini-2.5-flash-preview-tts:10:3,gemini-3.1-flash-tts-preview:10:3}
-  tts-voice-name: ${GEMINI_TTS_VOICE:Kore}
 
-listening:
-  practice:
-    generation:
-      enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:false}
-      cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
+  # Content-generation models (generateContent). Each entry is model:dailyLimit:rpmLimit; tried in
+  # order until one still has quota left.
+  v1:
+    base-url: https://generativelanguage.googleapis.com/v1
+    models: ${GEMINI_MODELS:gemini-3.1-flash-lite:500:15,gemma-4-26b-a4b-it:14000:30}
 
-word:
-  enrichment:
-    enabled: ${WORD_ENRICHMENT_ENABLED:false}
-    cron: ${WORD_ENRICHMENT_CRON:*/5 * * * * *}
+  # Text-to-speech models (generateContent with an AUDIO response). Same model:dailyLimit:rpmLimit
+  # format as v1.models.
+  v1beta:
+    base-url: https://generativelanguage.googleapis.com/v1beta
+    tts-models: ${GEMINI_TTS_MODELS:gemini-2.5-flash-preview-tts:10:3,gemini-3.1-flash-tts-preview:10:3}
+    tts-voice-name: ${GEMINI_TTS_VOICE:Kore}
+
+# ---------------------------------------------------------------------------
+# Scheduled jobs
+# ---------------------------------------------------------------------------
+job:
+  listening:
+    practice:
+      generation:
+        enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:false}
+        cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
+
+  word:
+    enrichment:
+      enabled: ${WORD_ENRICHMENT_ENABLED:false}
+      cron: ${WORD_ENRICHMENT_CRON:*/5 * * * * *}
+
   meaning:
     practice:
       enabled: ${WORD_MEANING_PRACTICE_ENABLED:false}
       cron: ${WORD_MEANING_PRACTICE_CRON:*/5 * * * * *}
+
   practice:
     assignment:
       enabled: ${WORD_PRACTICE_ASSIGNMENT_ENABLED:false}

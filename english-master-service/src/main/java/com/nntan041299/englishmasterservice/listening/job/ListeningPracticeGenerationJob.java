@@ -14,10 +14,10 @@ public class ListeningPracticeGenerationJob {
 
     private final ListeningPracticeGenerationService listeningPracticeGenerationService;
 
-    @Value("${listening.practice.generation.enabled}")
+    @Value("${job.listening.practice.generation.enabled}")
     private boolean enabled;
 
-    @Scheduled(cron = "${listening.practice.generation.cron}")
+    @Scheduled(cron = "${job.listening.practice.generation.cron}")
     public void run() {
         if (!enabled) {
             return;

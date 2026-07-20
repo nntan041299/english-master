@@ -1,6 +1,7 @@
 package com.nntan041299.englishmasterservice.listening.service;
 
 import com.nntan041299.englishmasterservice.ai.AIService;
+import com.nntan041299.englishmasterservice.ai.AiModelsExhaustedException;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
 import com.nntan041299.englishmasterservice.auth.entity.LanguageLevel;
@@ -50,7 +51,7 @@ public class ListeningPracticeGenerationService {
     @Transactional
     public void generate() {
         if (Instant.now().isBefore(retryAfter)) {
-            log.info("listening_practice_generation skipped reason=backing_off_after_voice_ai_error retry_after={}",
+            log.debug("listening_practice_generation skipped reason=backing_off_after_voice_ai_error retry_after={}",
                     retryAfter);
             return;
         }
@@ -69,6 +70,11 @@ public class ListeningPracticeGenerationService {
         ListeningChallengeAiResponse aiResponse;
         try {
             aiResponse = aiService.generateContent(prompt, ListeningChallengeAiResponse.class);
+        } catch (AiModelsExhaustedException ex) {
+            retryAfter = Instant.now().plus(VOICE_AI_ERROR_BACKOFF);
+            log.warn("listening_practice_generation sentence_ai_models_exhausted error={} retry_after={}",
+                    ex.getMessage(), retryAfter);
+            return;
         } catch (Exception ex) {
             log.error("listening_practice_generation sentence_ai_error error={}", ex.getMessage(), ex);
             return;
@@ -77,6 +83,11 @@ public class ListeningPracticeGenerationService {
         byte[] voiceData;
         try {
             voiceData = aiService.synthesizeSpeechWav(aiResponse.sentence());
+        } catch (AiModelsExhaustedException ex) {
+            retryAfter = Instant.now().plus(VOICE_AI_ERROR_BACKOFF);
+            log.warn("listening_practice_generation voice_ai_models_exhausted error={} retry_after={}",
+                    ex.getMessage(), retryAfter);
+            return;
         } catch (Exception ex) {
             retryAfter = Instant.now().plus(VOICE_AI_ERROR_BACKOFF);
             log.error("listening_practice_generation voice_ai_error error={} retry_after={}",

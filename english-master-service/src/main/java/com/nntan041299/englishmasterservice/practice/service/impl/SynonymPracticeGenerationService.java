@@ -34,4 +34,9 @@ public class SynonymPracticeGenerationService extends AbstractPracticeGeneration
     protected AiPromptKey getPromptKey() {
         return AiPromptKey.SYNONYM_PRACTICE_GENERATION;
     }
+
+    @Override
+    public void generate() {
+        // do nothing.
+    }
 }

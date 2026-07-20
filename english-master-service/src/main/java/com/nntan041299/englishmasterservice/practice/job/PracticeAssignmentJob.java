@@ -28,7 +28,7 @@ public class PracticeAssignmentJob {
     private final UserPracticeRepository userPracticeRepository;
     private final Random random = new Random();
 
-    @Value("${word.practice.assignment.enabled}")
+    @Value("${job.practice.assignment.enabled}")
     private boolean enabled;
 
     /**
@@ -36,7 +36,7 @@ public class PracticeAssignmentJob {
      * saved. The missing groups are computed in SQL; for each missing {@code (user, meaning, source)}
      * group a random candidate practice is assigned.
      */
-    @Scheduled(cron = "${word.practice.assignment.cron}")
+    @Scheduled(cron = "${job.practice.assignment.cron}")
     @Transactional
     public void assign() {
         if (!enabled) {

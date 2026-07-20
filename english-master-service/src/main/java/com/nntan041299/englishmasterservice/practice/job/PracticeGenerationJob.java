@@ -15,10 +15,10 @@ public class PracticeGenerationJob {
 
     private final List<PracticeGenerationService> practiceGenerationServices;
 
-    @Value("${word.meaning.practice.enabled}")
+    @Value("${job.meaning.practice.enabled}")
     private boolean enabled;
 
-    @Scheduled(cron = "${word.meaning.practice.cron}")
+    @Scheduled(cron = "${job.meaning.practice.cron}")
     public void run() {
         if (!enabled) {
             return;

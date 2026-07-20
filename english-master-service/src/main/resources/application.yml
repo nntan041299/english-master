@@ -82,14 +82,13 @@ gemini:
   base-url: https://generativelanguage.googleapis.com/v1
   base-beta-url: https://generativelanguage.googleapis.com/v1beta
   model: gemini-3.1-flash-lite
-  tts-model: ${GEMINI_TTS_MODEL:gemini-2.5-flash-preview-tts}
+  tts-models: ${GEMINI_TTS_MODELS:gemini-2.5-flash-preview-tts:10:3,gemini-3.1-flash-preview-tts:10:3}
   tts-voice-name: ${GEMINI_TTS_VOICE:Kore}
 
 listening:
   practice:
     generation:
       cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
-      max-voice-requests: ${LISTENING_MAX_VOICE_REQUESTS:0}
 
 word:
   enrichment:

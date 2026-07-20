@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "geminiBeta", url = "${gemini.base-beta-url}")
+@FeignClient(name = "geminiBeta", url = "${gemini.v1beta.base-url}")
 public interface GeminiBetaClient {
 
     @PostMapping("/models/{model}:generateContent")

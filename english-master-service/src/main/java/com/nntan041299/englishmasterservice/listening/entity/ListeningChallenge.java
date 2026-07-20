@@ -19,7 +19,7 @@ import lombok.Setter;
 /**
  * A pre-generated listening challenge, shared across all users at its {@link #level} — not owned by
  * a single user, since each one costs a limited AI voice-generation call to produce (see
- * ListeningVoiceGenerationStats). Whether a given user has already answered one is tracked via
+ * {@link com.nntan041299.englishmasterservice.ai.entity.AiLimitStats}). Whether a given user has already answered one is tracked via
  * {@link ListeningSubmission}, not on this entity.
  */
 @Entity

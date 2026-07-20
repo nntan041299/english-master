@@ -3,6 +3,7 @@ package com.nntan041299.englishmasterservice.ai.gemini;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.ai.WavEncoder;
+import com.nntan041299.englishmasterservice.ai.entity.AiLimitStats;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiContent;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiGenerationConfig;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiInlineData;
@@ -12,8 +13,7 @@ import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiRequest;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiResponse;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiSpeechConfig;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiVoiceConfig;
-import com.nntan041299.englishmasterservice.listening.entity.ListeningVoiceGenerationStats;
-import com.nntan041299.englishmasterservice.listening.repository.ListeningVoiceGenerationStatsRepository;
+import com.nntan041299.englishmasterservice.ai.repository.AiLimitStatsRepository;
 import feign.FeignException;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
@@ -46,72 +46,53 @@ public class GeminiService implements AIService {
     private final GeminiClient geminiClient;
     private final GeminiBetaClient geminiBetaClient;
     private final ObjectMapper objectMapper;
-    private final ListeningVoiceGenerationStatsRepository voiceGenerationStatsRepository;
+    private final AiLimitStatsRepository aiLimitStatsRepository;
 
     @Value("${gemini.api-key}")
     private String apiKey;
 
-    @Value("${gemini.model}")
-    private String model;
-
     /**
      * Comma-separated {@code model:dailyLimit:rpmLimit} entries, tried in order until one has quota
-     * left. Both limits are checked against counters persisted in {@link ListeningVoiceGenerationStats}
-     * so usage survives server restarts; the daily counter resets when the calendar date changes and
-     * the RPM counter resets once its one-minute window elapses.
+     * left. Both limits are checked against counters persisted in {@link AiLimitStats} so usage
+     * survives server restarts; the daily counter resets when the calendar date changes and the RPM
+     * counter resets once its one-minute window elapses.
      */
-    @Value("${gemini.tts-models}")
+    @Value("${gemini.v1.models}")
+    private String modelsConfig;
+
+    @Value("${gemini.v1beta.tts-models}")
     private String ttsModelsConfig;
 
-    @Value("${gemini.tts-voice-name}")
+    @Value("${gemini.v1beta.tts-voice-name}")
     private String ttsVoiceName;
 
-    private List<String> ttsModels;
-    private Map<String, Integer> ttsModelDailyLimits;
-    private Map<String, Integer> ttsModelRpmLimits;
+    private ModelLimits models;
+    private ModelLimits ttsModels;
 
     @PostConstruct
     void init() {
-        Map<String, Integer> dailyLimits = new LinkedHashMap<>();
-        Map<String, Integer> rpmLimits = new LinkedHashMap<>();
-        for (String entry : ttsModelsConfig.split(",")) {
-            String trimmed = entry.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            String[] parts = trimmed.split(":", 3);
-            if (parts.length != 3) {
-                throw new IllegalStateException(
-                        "gemini.tts-models entry must be in 'model:dailyLimit:rpmLimit' format, got: " + trimmed);
-            }
-            String modelName = parts[0].trim();
-            dailyLimits.put(modelName, Integer.parseInt(parts[1].trim()));
-            rpmLimits.put(modelName, Integer.parseInt(parts[2].trim()));
-        }
-        if (dailyLimits.isEmpty()) {
-            throw new IllegalStateException("gemini.tts-models must configure at least one model");
-        }
-        ttsModels = List.copyOf(dailyLimits.keySet());
-        ttsModelDailyLimits = dailyLimits;
-        ttsModelRpmLimits = rpmLimits;
+        models = ModelLimits.parse("gemini.v1.models", modelsConfig);
+        ttsModels = ModelLimits.parse("gemini.v1beta.tts-models", ttsModelsConfig);
     }
 
     @Override
     public <T> T generateContent(String prompt, Class<T> responseType) {
-        GeminiRequest request = GeminiRequest.builder()
-                .contents(List.of(new GeminiContent(List.of(GeminiPart.builder().text(prompt).build()))))
-                .build();
+        String text = withModelFallback(models, "generateContent", candidateModel -> {
+            GeminiRequest request = GeminiRequest.builder()
+                    .contents(List.of(new GeminiContent(List.of(GeminiPart.builder().text(prompt).build()))))
+                    .build();
 
-        GeminiResponse response = geminiClient.generateContent(model, apiKey, request);
+            GeminiResponse response = geminiClient.generateContent(candidateModel, apiKey, request);
 
-        String text = response.getCandidates().getFirst()
-                .getContent()
-                .getParts().getFirst()
-                .getText();
+            String rawText = response.getCandidates().getFirst()
+                    .getContent()
+                    .getParts().getFirst()
+                    .getText();
 
-        text = text.replaceAll("```[a-zA-Z]*\\n?", "").replaceAll("```", "").trim();
-
-        log.info("GeminiService.generateContent prompt={} response={}", prompt, text);
+            String cleaned = rawText.replaceAll("```[a-zA-Z]*\\n?", "").replaceAll("```", "").trim();
+            log.info("GeminiService.generateContent model={} prompt={} response={}", candidateModel, prompt, cleaned);
+            return cleaned;
+        });
 
         if (responseType.equals(String.class)) {
             return responseType.cast(text);
@@ -126,91 +107,99 @@ public class GeminiService implements AIService {
 
     @Override
     public byte[] synthesizeSpeechWav(String text) {
-        for (String candidateModel : ttsModels) {
-            int dailyLimit = ttsModelDailyLimits.get(candidateModel);
-            ListeningVoiceGenerationStats stats = findOrCreateStats(candidateModel);
+        return withModelFallback(ttsModels, "synthesizeSpeechWav", candidateModel -> {
+            GeminiRequest request = GeminiRequest.builder()
+                    .contents(List.of(new GeminiContent(List.of(GeminiPart.builder().text(text).build()))))
+                    .generationConfig(GeminiGenerationConfig.builder()
+                            .responseModalities(List.of("AUDIO"))
+                            .speechConfig(new GeminiSpeechConfig(
+                                    new GeminiVoiceConfig(new GeminiPrebuiltVoiceConfig(ttsVoiceName))))
+                            .build())
+                    .build();
+
+            GeminiResponse response = geminiBetaClient.generateContent(candidateModel, apiKey, request);
+
+            GeminiInlineData audio = response.getCandidates().get(0)
+                    .getContent()
+                    .getParts().get(0)
+                    .getInlineData();
+
+            byte[] pcm = Base64.getDecoder().decode(audio.getData());
+            int sampleRate = parseSampleRate(audio.getMimeType());
+
+            log.info("GeminiService.synthesizeSpeechWav model={} text_length={} mime_type={} sample_rate={}",
+                    candidateModel, text.length(), audio.getMimeType(), sampleRate);
+
+            return WavEncoder.pcm16ToWav(pcm, sampleRate, MONO);
+        });
+    }
+
+    /**
+     * Calls {@code call} with each of {@code limits}' models in order, skipping any model whose
+     * daily quota or RPM window is already exhausted (per {@link AiLimitStats}), and falling back to
+     * the next model if the provider itself returns 429. Returns the first successful result.
+     */
+    private <T> T withModelFallback(ModelLimits limits, String operation, ModelCall<T> call) {
+        for (String candidateModel : limits.models()) {
+            int dailyLimit = limits.dailyLimits().get(candidateModel);
+            AiLimitStats stats = findOrCreateStats(candidateModel);
             resetDailyCountIfElapsed(stats);
-            if (stats.getRequestCount() >= dailyLimit) {
-                log.info("GeminiService.synthesizeSpeechWav model_skipped model={} reason=daily_quota_reached count={} limit={}",
-                        candidateModel, stats.getRequestCount(), dailyLimit);
-                voiceGenerationStatsRepository.save(stats);
+            if (stats.getRequestPerDateCount() >= dailyLimit) {
+                log.info("GeminiService.{} model_skipped model={} reason=daily_quota_reached count={} limit={}",
+                        operation, candidateModel, stats.getRequestPerDateCount(), dailyLimit);
+                aiLimitStatsRepository.save(stats);
                 continue;
             }
 
-            int rpmLimit = ttsModelRpmLimits.get(candidateModel);
+            int rpmLimit = limits.rpmLimits().get(candidateModel);
             resetRpmWindowIfElapsed(stats);
             if (stats.getRpmCount() >= rpmLimit) {
-                log.info("GeminiService.synthesizeSpeechWav model_skipped model={} reason=rpm_limit_reached limit={}",
-                        candidateModel, rpmLimit);
-                voiceGenerationStatsRepository.save(stats);
+                log.info("GeminiService.{} model_skipped model={} reason=rpm_limit_reached limit={}",
+                        operation, candidateModel, rpmLimit);
+                aiLimitStatsRepository.save(stats);
                 continue;
             }
 
             try {
-                byte[] wav = callSynthesizeSpeechWav(candidateModel, text);
-                stats.setRequestCount(stats.getRequestCount() + 1);
+                T result = call.call(candidateModel);
+                stats.setRequestPerDateCount(stats.getRequestPerDateCount() + 1);
                 stats.setRpmCount(stats.getRpmCount() + 1);
-                voiceGenerationStatsRepository.save(stats);
-                return wav;
+                aiLimitStatsRepository.save(stats);
+                return result;
             } catch (FeignException.TooManyRequests ex) {
-                log.warn("GeminiService.synthesizeSpeechWav model_rate_limited model={}", candidateModel);
-                stats.setRequestCount(dailyLimit);
+                log.warn("GeminiService.{} model_rate_limited model={}", operation, candidateModel);
+                stats.setRequestPerDateCount(dailyLimit);
                 stats.setRpmCount(rpmLimit);
-                voiceGenerationStatsRepository.save(stats);
+                aiLimitStatsRepository.save(stats);
             }
         }
 
-        throw new IllegalStateException("All configured Gemini TTS models are rate-limited or over quota");
+        throw new IllegalStateException(
+                "All configured Gemini models for " + operation + " are rate-limited or over quota");
     }
 
-    private byte[] callSynthesizeSpeechWav(String ttsModel, String text) {
-        GeminiRequest request = GeminiRequest.builder()
-                .contents(List.of(new GeminiContent(List.of(GeminiPart.builder().text(text).build()))))
-                .generationConfig(GeminiGenerationConfig.builder()
-                        .responseModalities(List.of("AUDIO"))
-                        .speechConfig(new GeminiSpeechConfig(
-                                new GeminiVoiceConfig(new GeminiPrebuiltVoiceConfig(ttsVoiceName))))
-                        .build())
-                .build();
-
-        GeminiResponse response = geminiBetaClient.generateContent(ttsModel, apiKey, request);
-
-        GeminiInlineData audio = response.getCandidates().get(0)
-                .getContent()
-                .getParts().get(0)
-                .getInlineData();
-
-        byte[] pcm = Base64.getDecoder().decode(audio.getData());
-        int sampleRate = parseSampleRate(audio.getMimeType());
-
-        log.info("GeminiService.synthesizeSpeechWav model={} text_length={} mime_type={} sample_rate={}",
-                ttsModel, text.length(), audio.getMimeType(), sampleRate);
-
-        return WavEncoder.pcm16ToWav(pcm, sampleRate, MONO);
-    }
-
-    private ListeningVoiceGenerationStats findOrCreateStats(String candidateModel) {
-        return voiceGenerationStatsRepository.findByModel(candidateModel)
+    private AiLimitStats findOrCreateStats(String candidateModel) {
+        return aiLimitStatsRepository.findByModel(candidateModel)
                 .orElseGet(() -> {
-                    ListeningVoiceGenerationStats stats = new ListeningVoiceGenerationStats();
+                    AiLimitStats stats = new AiLimitStats();
                     stats.setModel(candidateModel);
-                    stats.setRequestCount(0);
+                    stats.setRequestPerDateCount(0);
                     stats.setRequestCountDate(LocalDate.now());
                     stats.setRpmWindowStart(LocalDateTime.now());
                     stats.setRpmCount(0);
-                    return voiceGenerationStatsRepository.save(stats);
+                    return aiLimitStatsRepository.save(stats);
                 });
     }
 
-    private void resetDailyCountIfElapsed(ListeningVoiceGenerationStats stats) {
+    private void resetDailyCountIfElapsed(AiLimitStats stats) {
         LocalDate today = LocalDate.now();
         if (!today.equals(stats.getRequestCountDate())) {
             stats.setRequestCountDate(today);
-            stats.setRequestCount(0);
+            stats.setRequestPerDateCount(0);
         }
     }
 
-    private void resetRpmWindowIfElapsed(ListeningVoiceGenerationStats stats) {
+    private void resetRpmWindowIfElapsed(AiLimitStats stats) {
         LocalDateTime now = LocalDateTime.now();
         if (stats.getRpmWindowStart() == null
                 || Duration.between(stats.getRpmWindowStart(), now).toSeconds() >= 60) {
@@ -225,5 +214,37 @@ public class GeminiService implements AIService {
         }
         Matcher matcher = SAMPLE_RATE_PATTERN.matcher(mimeType);
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : DEFAULT_SAMPLE_RATE;
+    }
+
+    @FunctionalInterface
+    private interface ModelCall<T> {
+        T call(String model);
+    }
+
+    /** Parsed {@code model:dailyLimit:rpmLimit} config for a Gemini endpoint. */
+    private record ModelLimits(List<String> models, Map<String, Integer> dailyLimits, Map<String, Integer> rpmLimits) {
+
+        static ModelLimits parse(String property, String config) {
+            Map<String, Integer> dailyLimits = new LinkedHashMap<>();
+            Map<String, Integer> rpmLimits = new LinkedHashMap<>();
+            for (String entry : config.split(",")) {
+                String trimmed = entry.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                String[] parts = trimmed.split(":", 3);
+                if (parts.length != 3) {
+                    throw new IllegalStateException(
+                            property + " entry must be in 'model:dailyLimit:rpmLimit' format, got: " + trimmed);
+                }
+                String modelName = parts[0].trim();
+                dailyLimits.put(modelName, Integer.parseInt(parts[1].trim()));
+                rpmLimits.put(modelName, Integer.parseInt(parts[2].trim()));
+            }
+            if (dailyLimits.isEmpty()) {
+                throw new IllegalStateException(property + " must configure at least one model");
+            }
+            return new ModelLimits(List.copyOf(dailyLimits.keySet()), dailyLimits, rpmLimits);
+        }
     }
 }

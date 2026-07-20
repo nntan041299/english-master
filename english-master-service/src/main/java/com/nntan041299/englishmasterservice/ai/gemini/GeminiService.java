@@ -2,6 +2,7 @@ package com.nntan041299.englishmasterservice.ai.gemini;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nntan041299.englishmasterservice.ai.AIService;
+import com.nntan041299.englishmasterservice.ai.AiModelsExhaustedException;
 import com.nntan041299.englishmasterservice.ai.WavEncoder;
 import com.nntan041299.englishmasterservice.ai.entity.AiLimitStats;
 import com.nntan041299.englishmasterservice.ai.gemini.dto.GeminiContent;
@@ -145,7 +146,7 @@ public class GeminiService implements AIService {
             AiLimitStats stats = findOrCreateStats(candidateModel);
             resetDailyCountIfElapsed(stats);
             if (stats.getRequestPerDateCount() >= dailyLimit) {
-                log.info("GeminiService.{} model_skipped model={} reason=daily_quota_reached count={} limit={}",
+                log.debug("GeminiService.{} model_skipped model={} reason=daily_quota_reached count={} limit={}",
                         operation, candidateModel, stats.getRequestPerDateCount(), dailyLimit);
                 aiLimitStatsRepository.save(stats);
                 continue;
@@ -154,7 +155,7 @@ public class GeminiService implements AIService {
             int rpmLimit = limits.rpmLimits().get(candidateModel);
             resetRpmWindowIfElapsed(stats);
             if (stats.getRpmCount() >= rpmLimit) {
-                log.info("GeminiService.{} model_skipped model={} reason=rpm_limit_reached limit={}",
+                log.debug("GeminiService.{} model_skipped model={} reason=rpm_limit_reached limit={}",
                         operation, candidateModel, rpmLimit);
                 aiLimitStatsRepository.save(stats);
                 continue;
@@ -174,7 +175,7 @@ public class GeminiService implements AIService {
             }
         }
 
-        throw new IllegalStateException(
+        throw new AiModelsExhaustedException(
                 "All configured Gemini models for " + operation + " are rate-limited or over quota");
     }
 

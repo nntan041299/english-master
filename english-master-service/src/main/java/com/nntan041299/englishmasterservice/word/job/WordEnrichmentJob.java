@@ -64,16 +64,10 @@ public class WordEnrichmentJob {
                 .map(Enum::name)
                 .collect(Collectors.joining(", "));
 
-        String existingCategories = categoryRepository.findAllByOrderByNameAsc().stream()
-                .map(Category::getName)
-                .collect(Collectors.joining(", "));
-
         MeaningAiResponse[] responseMeanings;
         try {
             responseMeanings = aiService.generateContent(
-                    aiPromptManager
-                            .get(AiPromptKey.WORD_ENRICHMENT)
-                            .formatted(partOfSpeechKeys, existingCategories, wordList),
+                    aiPromptManager.get(AiPromptKey.WORD_ENRICHMENT).formatted(partOfSpeechKeys, wordList),
                     MeaningAiResponse[].class);
         } catch (Exception ex) {
             log.error("word_enrichment_job ai_service_error error={}", ex.getMessage(), ex);

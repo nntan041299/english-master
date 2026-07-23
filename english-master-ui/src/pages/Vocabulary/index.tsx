@@ -34,6 +34,14 @@ function WordCard({ w }: { w: WordItem }) {
                 {m.ipa}
               </span>
             )}
+            {(m.categories ?? []).map((c) => (
+              <span
+                key={c}
+                className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full capitalize shrink-0"
+              >
+                {c}
+              </span>
+            ))}
           </div>
         ))}
         {(w.meanings ?? []).length === 0 && (
@@ -49,45 +57,79 @@ function WordCard({ w }: { w: WordItem }) {
   );
 }
 
-/* ── Desktop table row ── */
+/* ── Desktop table rows: one row per meaning, word/level cells span all of a word's rows ── */
 function WordRow({ w, idx, page }: { w: WordItem; idx: number; page: number }) {
+  const meanings = w.meanings ?? [];
+  const rowCount = Math.max(meanings.length, 1);
+
   return (
-    <tr className="border-b border-surface-100 last:border-0 hover:bg-surface-50 transition-colors">
-      <td className="px-5 py-3.5 text-surface-400 text-xs">
-        {page * PAGE_SIZE + idx + 1}
-      </td>
-      <td className="px-5 py-3.5">
-        <span
-          className="font-semibold text-surface-900"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {w.text}
-        </span>
-      </td>
-      <td className="px-5 py-3.5">
-        <div className="flex flex-col gap-1">
-          {(w.meanings ?? []).map((m: WordMeaning) => (
-            <div key={m.id} className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize">
-                {m.partOfSpeech.toLowerCase()}
-              </span>
-              <span className="text-sm text-surface-700">{m.meaning}</span>
-              {m.ipa && (
-                <span className="text-xs text-surface-400 font-mono">
-                  {m.ipa}
+    <>
+      {Array.from({ length: rowCount }, (_, mIdx) => {
+        const m: WordMeaning | undefined = meanings[mIdx];
+        return (
+          <tr
+            key={m?.id ?? `${w.id}-empty`}
+            className="border-b border-surface-100 last:border-0 hover:bg-surface-50 transition-colors"
+          >
+            {mIdx === 0 && (
+              <td
+                rowSpan={rowCount}
+                className="px-5 py-3.5 text-surface-400 text-xs align-top"
+              >
+                {page * PAGE_SIZE + idx + 1}
+              </td>
+            )}
+            {mIdx === 0 && (
+              <td rowSpan={rowCount} className="px-5 py-3.5 align-top">
+                <span
+                  className="font-semibold text-surface-900"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {w.text}
+                </span>
+              </td>
+            )}
+            <td className="px-5 py-3.5">
+              {m ? (
+                <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded capitalize">
+                  {m.partOfSpeech.toLowerCase()}
+                </span>
+              ) : (
+                <span className="text-xs text-surface-400 italic">
+                  Enriching…
                 </span>
               )}
-            </div>
-          ))}
-          {(w.meanings ?? []).length === 0 && (
-            <span className="text-xs text-surface-400 italic">Enriching…</span>
-          )}
-        </div>
-      </td>
-      <td className="px-5 py-3.5">
-        <LevelBadge level={w.learningLevel} />
-      </td>
-    </tr>
+            </td>
+            <td className="px-5 py-3.5 text-sm text-surface-700">
+              {m?.meaning}
+            </td>
+            <td className="px-5 py-3.5 text-xs text-surface-400 font-mono">
+              {m?.ipa}
+            </td>
+            <td className="px-5 py-3.5">
+              <div className="flex items-center gap-1 flex-wrap">
+                {(m?.categories ?? []).map((c) => (
+                  <span
+                    key={c}
+                    className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full capitalize"
+                  >
+                    {c}
+                  </span>
+                ))}
+                {m && (m.categories ?? []).length === 0 && (
+                  <span className="text-xs text-surface-300">—</span>
+                )}
+              </div>
+            </td>
+            {mIdx === 0 && (
+              <td rowSpan={rowCount} className="px-5 py-3.5 align-top">
+                <LevelBadge level={w.learningLevel} />
+              </td>
+            )}
+          </tr>
+        );
+      })}
+    </>
   );
 }
 
@@ -271,7 +313,16 @@ const Vocabulary = () => {
                           Word
                         </th>
                         <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                          Meanings
+                          Part of speech
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          Meaning
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          IPA
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          Categories
                         </th>
                         <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                           Level

@@ -5,12 +5,15 @@ import com.nntan041299.englishmasterservice.common.util.StringUtils;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
 import com.nntan041299.englishmasterservice.meaning.dto.MeaningAiResponse;
+import com.nntan041299.englishmasterservice.meaning.entity.Category;
 import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import com.nntan041299.englishmasterservice.meaning.entity.PartOfSpeech;
 import com.nntan041299.englishmasterservice.word.entity.Word;
+import com.nntan041299.englishmasterservice.meaning.repository.CategoryRepository;
 import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordRepository;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +35,7 @@ public class WordEnrichmentJob {
 
     private final WordRepository wordRepository;
     private final MeaningRepository meaningRepository;
+    private final CategoryRepository categoryRepository;
     private final AIService aiService;
     private final AiPromptManager aiPromptManager;
 
@@ -60,10 +64,16 @@ public class WordEnrichmentJob {
                 .map(Enum::name)
                 .collect(Collectors.joining(", "));
 
+        String existingCategories = categoryRepository.findAllByOrderByNameAsc().stream()
+                .map(Category::getName)
+                .collect(Collectors.joining(", "));
+
         MeaningAiResponse[] responseMeanings;
         try {
             responseMeanings = aiService.generateContent(
-                    aiPromptManager.get(AiPromptKey.WORD_ENRICHMENT).formatted(partOfSpeechKeys, wordList),
+                    aiPromptManager
+                            .get(AiPromptKey.WORD_ENRICHMENT)
+                            .formatted(partOfSpeechKeys, existingCategories, wordList),
                     MeaningAiResponse[].class);
         } catch (Exception ex) {
             log.error("word_enrichment_job ai_service_error error={}", ex.getMessage(), ex);
@@ -73,7 +83,8 @@ public class WordEnrichmentJob {
         Map<String, Word> wordMap = words.stream().collect(Collectors.toMap(Word::getText, w -> w));
 
         List<MeaningAiResponse> validMeanings = Arrays.stream(responseMeanings)
-                .map(dto -> new MeaningAiResponse(dto.word().toLowerCase(), dto.partOfSpeech(), dto.meaning(), dto.ipa()))
+                .map(dto -> new MeaningAiResponse(
+                        dto.word().toLowerCase(), dto.partOfSpeech(), dto.meaning(), dto.ipa(), dto.categories()))
                 .filter(dto -> {
                     boolean found = wordMap.containsKey(dto.word());
                     if (!found) log.warn("word_enrichment_job unknown_word word={}", dto.word());
@@ -95,6 +106,7 @@ public class WordEnrichmentJob {
 
         Set<String> invalidWordTexts = invalidMeanings.stream().map(Word::getText).collect(Collectors.toSet());
 
+        Map<String, Category> categoryCache = new HashMap<>();
         List<Meaning> meanings = validMeanings.stream()
                 .filter(dto -> !invalidWordTexts.contains(dto.word()))
                 .map(dto -> Meaning.builder()
@@ -102,6 +114,7 @@ public class WordEnrichmentJob {
                         .partOfSpeech(parsePartOfSpeech(dto.partOfSpeech()))
                         .meaning(StringUtils.capitalizeFirst(dto.meaning()))
                         .ipa(dto.ipa())
+                        .categories(resolveCategories(dto.categories(), categoryCache))
                         .build())
                 .toList();
 
@@ -109,6 +122,24 @@ public class WordEnrichmentJob {
         log.info("word_enrichment_job enriched_words={}", meanings.stream()
                 .map(m -> m.getWord().getText())
                 .collect(Collectors.joining(", ")));
+    }
+
+    private List<Category> resolveCategories(List<String> rawCategories, Map<String, Category> categoryCache) {
+        if (rawCategories == null || rawCategories.isEmpty()) {
+            return List.of();
+        }
+        return rawCategories.stream()
+                .filter(name -> name != null && !name.isBlank())
+                .map(name -> name.trim().toLowerCase())
+                .distinct()
+                .map(name -> categoryCache.computeIfAbsent(name, this::findOrCreateCategory))
+                .toList();
+    }
+
+    private Category findOrCreateCategory(String name) {
+        return categoryRepository
+                .findByNameIgnoreCase(name)
+                .orElseGet(() -> categoryRepository.save(Category.builder().name(name).build()));
     }
 
     private PartOfSpeech parsePartOfSpeech(String raw) {

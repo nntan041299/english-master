@@ -11,8 +11,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,4 +49,12 @@ public class Meaning extends BaseEntity {
 
     @Column(length = 100)
     private String ipa;
+
+    @ManyToMany
+    @JoinTable(
+            name = "meaning_categories",
+            joinColumns = @JoinColumn(name = "meaning_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @Builder.Default
+    private List<Category> categories = new ArrayList<>();
 }

@@ -20,5 +20,7 @@ public interface WordMapper {
 
     @Mapping(target = "meaning", expression = "java(StringUtils.capitalizeFirst(meaning.getMeaning()))")
     @Mapping(target = "ipa", source = "ipa")
+    @Mapping(target = "categories", expression = "java(meaning.getCategories().stream()"
+            + ".map(com.nntan041299.englishmasterservice.meaning.entity.Category::getName).toList())")
     WordMeaningResponse toMeaningResponse(Meaning meaning);
 }

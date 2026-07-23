@@ -5,6 +5,7 @@ export interface WordMeaning {
   partOfSpeech: string;
   meaning: string;
   ipa?: string;
+  categories?: string[];
 }
 
 export interface WordItem {

@@ -3,6 +3,7 @@ package com.nntan041299.englishmasterservice.practice.controller;
 import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeRequest;
 import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeResponse;
 import com.nntan041299.englishmasterservice.practice.dto.PracticeResponse;
+import com.nntan041299.englishmasterservice.practice.dto.PracticeStatsResponse;
 import com.nntan041299.englishmasterservice.practice.service.PracticeService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -29,5 +30,10 @@ public class PracticeController {
     @PostMapping("/answer")
     public ResponseEntity<AnswerPracticeResponse> answerPractice(@Valid @RequestBody AnswerPracticeRequest request) {
         return ResponseEntity.ok(practiceService.answerPractice(request));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<PracticeStatsResponse> getStats() {
+        return ResponseEntity.ok(practiceService.getStats());
     }
 }

@@ -11,6 +11,7 @@ import com.nntan041299.englishmasterservice.translation.dto.TranslationChallenge
 import com.nntan041299.englishmasterservice.translation.dto.TranslationChallengeResponse;
 import com.nntan041299.englishmasterservice.translation.dto.TranslationFeedbackAiResponse;
 import com.nntan041299.englishmasterservice.translation.dto.TranslationFeedbackResponse;
+import com.nntan041299.englishmasterservice.translation.dto.TranslationHistoryItemResponse;
 import com.nntan041299.englishmasterservice.translation.entity.TranslationChallenge;
 import com.nntan041299.englishmasterservice.translation.entity.TranslationDirection;
 import com.nntan041299.englishmasterservice.translation.entity.TranslationSubmission;
@@ -20,7 +21,9 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -115,6 +118,13 @@ public class TranslationService {
 
         return new TranslationFeedbackResponse(
                 submission.getId(), correct, submission.getFeedback(), submission.getSuggestedTranslation());
+    }
+
+    /** Returns the current user's past translation submissions, most recent first. */
+    @Transactional(readOnly = true)
+    public Page<TranslationHistoryItemResponse> getHistory(Pageable pageable) {
+        User user = currentUserProvider.getCurrentUser();
+        return submissionRepository.findByUserId(user.getId(), pageable).map(TranslationHistoryItemResponse::from);
     }
 
     private String sourceLanguageOf(TranslationDirection direction) {

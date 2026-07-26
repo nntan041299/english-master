@@ -1,5 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getPractices, answerPractice } from "@/service/practice";
+import {
+  getPractices,
+  getPracticeStats,
+  answerPractice,
+} from "@/service/practice";
 
 export const PRACTICE_QUERY_KEY = ["practices"];
 
@@ -12,4 +16,10 @@ export const usePractices = () =>
 export const useAnswerPractice = () =>
   useMutation({
     mutationFn: answerPractice,
+  });
+
+export const usePracticeStats = () =>
+  useQuery({
+    queryKey: ["practice-stats"],
+    queryFn: getPracticeStats,
   });

@@ -8,6 +8,8 @@ import com.nntan041299.englishmasterservice.practice.checker.AnswerCheckerFactor
 import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeRequest;
 import com.nntan041299.englishmasterservice.practice.dto.AnswerPracticeResponse;
 import com.nntan041299.englishmasterservice.practice.dto.PracticeResponse;
+import com.nntan041299.englishmasterservice.practice.dto.PracticeStatBucketResponse;
+import com.nntan041299.englishmasterservice.practice.dto.PracticeStatsResponse;
 import com.nntan041299.englishmasterservice.practice.entity.LearningTracking;
 import com.nntan041299.englishmasterservice.practice.entity.Practice;
 import com.nntan041299.englishmasterservice.practice.entity.UserPractice;
@@ -16,6 +18,8 @@ import com.nntan041299.englishmasterservice.practice.repository.PracticeReposito
 import com.nntan041299.englishmasterservice.practice.repository.UserPracticeRepository;
 import com.nntan041299.englishmasterservice.practice.repository.UserPracticeResultRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -95,5 +99,23 @@ public class PracticeService {
         userPracticeRepository.save(userPractice);
 
         return new AnswerPracticeResponse(correct, practice.getCorrectAnswer(), newTracking);
+    }
+
+    /** Correct/incorrect practice-answer counts for the current user, for today, this week, and this month. */
+    @Transactional(readOnly = true)
+    public PracticeStatsResponse getStats() {
+        Long userId = currentUserProvider.getCurrentUser().getId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        LocalDateTime weekStart = LocalDate.now().with(DayOfWeek.MONDAY).atStartOfDay();
+        LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+
+        return new PracticeStatsResponse(
+                PracticeStatBucketResponse.from(
+                        userPracticeResultRepository.findStatsByUserIdAndCreatedAtBetween(userId, todayStart, now)),
+                PracticeStatBucketResponse.from(
+                        userPracticeResultRepository.findStatsByUserIdAndCreatedAtBetween(userId, weekStart, now)),
+                PracticeStatBucketResponse.from(
+                        userPracticeResultRepository.findStatsByUserIdAndCreatedAtBetween(userId, monthStart, now)));
     }
 }

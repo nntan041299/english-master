@@ -1,48 +1,110 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { selectUser } from "@/redux/user/selectors";
 import Layout from "@/layouts/Layout";
 import { createWord, getDashboard } from "@/service/word";
+import { usePracticeStats } from "@/hook/usePractice";
+import type { PracticeStatBucket } from "@/service/practice";
 
-const LEVELS = ["NEW", "LEARNING", "FAMILIAR", "MASTERED"] as const;
-type Level = (typeof LEVELS)[number];
+/* ── Progress donut — correct vs incorrect practice answers for a period ── */
+function ProgressDonut({ bucket }: { bucket: PracticeStatBucket | undefined }) {
+  const size = 96;
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
 
-const LEVEL_CONFIG: Record<
-  Level,
-  { label: string; bar: string; dot: string; text: string; bg: string }
-> = {
-  NEW: {
-    label: "New",
-    bar: "bg-surface-300",
-    dot: "bg-surface-400",
-    text: "text-surface-500",
-    bg: "bg-surface-50",
+  const total = bucket?.total ?? 0;
+  const correct = bucket?.correct ?? 0;
+  const correctPct = total > 0 ? correct / total : 0;
+  const correctLen = circumference * correctPct;
+  const accuracy = total > 0 ? Math.round(correctPct * 100) : null;
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="var(--color-surface-100)"
+          strokeWidth={strokeWidth}
+        />
+        {total > 0 && (
+          <>
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="var(--color-error-400)"
+              strokeWidth={strokeWidth}
+              strokeDasharray={circumference}
+              strokeLinecap="round"
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="var(--color-sage-500)"
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${correctLen} ${circumference}`}
+              strokeLinecap="round"
+              className="transition-all duration-500"
+            />
+          </>
+        )}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span
+          className="text-xl font-bold text-surface-900"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {accuracy === null ? "—" : `${accuracy}%`}
+        </span>
+        <span
+          className="text-[10px] text-surface-400 font-medium"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          {total} done
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const STAT_CARDS: {
+  key: "totalWords" | "masteredWords" | "learning" | "newWords";
+  label: string;
+  icon: string;
+  accent: string;
+}[] = [
+  {
+    key: "totalWords",
+    label: "Total words",
+    icon: "pi-book",
+    accent: "bg-surface-300",
   },
-  LEARNING: {
-    label: "Learning",
-    bar: "bg-indigo-400",
-    dot: "bg-indigo-400",
-    text: "text-indigo-600",
-    bg: "bg-indigo-50",
-  },
-  FAMILIAR: {
-    label: "Familiar",
-    bar: "bg-gold-400",
-    dot: "bg-gold-400",
-    text: "text-gold-600",
-    bg: "bg-gold-50",
-  },
-  MASTERED: {
+  {
+    key: "masteredWords",
     label: "Mastered",
-    bar: "bg-sage-500",
-    dot: "bg-sage-500",
-    text: "text-sage-700",
-    bg: "bg-sage-50",
+    icon: "pi-star-fill",
+    accent: "bg-sage-500",
   },
-};
+  {
+    key: "learning",
+    label: "Learning",
+    icon: "pi-sync",
+    accent: "bg-indigo-400",
+  },
+  { key: "newWords", label: "New", icon: "pi-sparkles", accent: "bg-gold-400" },
+];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { firstName } = useSelector(selectUser);
   const [word, setWord] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -52,6 +114,8 @@ const Dashboard = () => {
     queryKey: ["dashboard"],
     queryFn: getDashboard,
   });
+  const { data: practiceStats, isLoading: loadingPracticeStats } =
+    usePracticeStats();
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -77,245 +141,214 @@ const Dashboard = () => {
     }
   };
 
-  const levelValues: Record<Level, number> = {
-    NEW: stats?.newWords ?? 0,
-    LEARNING: stats?.learningWords ?? 0,
-    FAMILIAR: stats?.familiarWords ?? 0,
-    MASTERED: stats?.masteredWords ?? 0,
+  const statValues: Record<
+    (typeof STAT_CARDS)[number]["key"],
+    number | undefined
+  > = {
+    totalWords: stats?.totalWords,
+    masteredWords: stats?.masteredWords,
+    learning: stats ? stats.learningWords + stats.familiarWords : undefined,
+    newWords: stats?.newWords,
   };
-  const chartTotal = stats ? LEVELS.reduce((s, l) => s + levelValues[l], 0) : 0;
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* Greeting */}
-        <div className="flex items-center justify-between">
+        {/* ── Greeting ── */}
+        <div className="rise-in flex items-center justify-between gap-4">
           <div>
             <p
-              className="text-xs font-medium text-surface-400 uppercase tracking-widest mb-0.5"
+              className="text-[11px] font-semibold text-gold-600 uppercase tracking-[0.2em] mb-1"
               style={{ fontFamily: "var(--font-sans)" }}
             >
               {greeting}
             </p>
             <h1
-              className="text-2xl font-bold text-surface-900"
-              style={{ fontFamily: "var(--font-display)" }}
+              className="text-3xl text-ink-900 leading-none"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
             >
               {firstName || "Welcome back"}
             </h1>
           </div>
-          <div className="flex items-center gap-2 bg-surface-50 border border-surface-200 rounded-xl px-4 py-2.5">
-            <i className="pi pi-bolt text-gold-500 text-sm" />
+          <div className="shrink-0 flex items-center gap-2 bg-white border border-surface-200 rounded-xl px-4 py-2.5">
+            <i className="pi pi-check-circle text-sage-600 text-sm" />
             <span
               className="text-sm font-semibold text-surface-900"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              0
+              {stats?.practicesDone ?? 0}
             </span>
             <span
               className="text-xs text-surface-400 font-medium"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              day streak
+              practices done
             </span>
           </div>
         </div>
 
-        {/* Add word — split-pill input */}
-        <form onSubmit={handleAdd}>
-          <div
-            className="flex items-stretch bg-white border-2 border-surface-200 rounded-2xl
-                        overflow-hidden focus-within:border-ink-900 transition-colors duration-200"
-          >
-            <div className="flex items-center pl-5 pr-2 shrink-0">
-              <i className="pi pi-plus-circle text-surface-300 text-lg" />
-            </div>
-            <input
-              type="text"
-              value={word}
-              onChange={(e) => {
-                setWord(e.target.value);
-                setSubmitError("");
-              }}
-              placeholder="Add a word — e.g. serendipity"
-              autoComplete="off"
-              className="flex-1 py-4 text-lg text-surface-900 placeholder:text-surface-300
-                         bg-transparent focus:outline-none"
-              style={{ fontFamily: "var(--font-display)" }}
-            />
-            <div className="p-2 shrink-0">
-              <button
-                type="submit"
-                disabled={submitting || !word.trim()}
-                className="h-full px-3 sm:px-5 rounded-xl bg-ink-900 text-parchment text-sm font-semibold
-                           hover:bg-ink-800 disabled:opacity-30 disabled:cursor-not-allowed
-                           transition-colors duration-150 cursor-pointer border-none"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                {submitting ? (
-                  <i className="pi pi-spin pi-spinner text-sm" />
-                ) : (
-                  <i className="pi pi-plus text-sm" />
-                )}
-              </button>
-            </div>
-          </div>
-          {submitError && (
-            <p
-              className="text-xs text-red-500 mt-2 pl-1"
+        {/* ── Quick capture — add a word, jump to vocabulary ── */}
+        <div className="rise-in" style={{ animationDelay: "40ms" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2
+              className="text-xs font-semibold text-surface-500 uppercase tracking-[0.15em]"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              {submitError}
-            </p>
-          )}
-        </form>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              label: "Total words",
-              value: stats?.totalWords ?? "—",
-              icon: "pi-book",
-              accent: "bg-surface-100 text-surface-600",
-            },
-            {
-              label: "Mastered",
-              value: stats?.masteredWords ?? "—",
-              icon: "pi-star",
-              accent: "bg-sage-100 text-sage-700",
-            },
-            {
-              label: "Learning",
-              value: stats ? stats.learningWords + stats.familiarWords : "—",
-              icon: "pi-sync",
-              accent: "bg-indigo-50 text-indigo-600",
-            },
-            {
-              label: "New",
-              value: stats?.newWords ?? "—",
-              icon: "pi-sparkles",
-              accent: "bg-gold-100 text-gold-600",
-            },
-          ].map(({ label, value, icon, accent }) => (
-            <div
-              key={label}
-              className="bg-white rounded-2xl p-5 border border-surface-200 flex flex-col gap-3"
+              Add a word
+            </h2>
+            <button
+              onClick={() => navigate("/vocabulary")}
+              className="text-xs font-semibold text-surface-500 hover:text-ink-900 transition-colors cursor-pointer bg-transparent border-none flex items-center gap-1"
+              style={{ fontFamily: "var(--font-sans)" }}
             >
-              <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent}`}
-              >
-                <i className={`pi ${icon} text-sm`} />
+              View vocabulary
+              <i className="pi pi-arrow-right text-[10px]" />
+            </button>
+          </div>
+          <form onSubmit={handleAdd}>
+            <div
+              className="flex items-stretch bg-white border-2 border-surface-200 rounded-2xl
+                          overflow-hidden focus-within:border-ink-900 transition-colors duration-200"
+            >
+              <div className="flex items-center pl-5 pr-2 shrink-0">
+                <i className="pi pi-plus-circle text-surface-300 text-lg" />
               </div>
-              <div>
-                <p
-                  className="text-2xl font-bold text-surface-900"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {loadingChart ? (
-                    <span className="text-surface-300">—</span>
-                  ) : (
-                    value
-                  )}
-                </p>
-                <p
-                  className="text-xs font-medium text-surface-500 mt-0.5 uppercase tracking-wider"
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => {
+                  setWord(e.target.value);
+                  setSubmitError("");
+                }}
+                placeholder="e.g. serendipity"
+                autoComplete="off"
+                className="flex-1 py-4 text-lg text-surface-900 placeholder:text-surface-300
+                           bg-transparent focus:outline-none"
+                style={{ fontFamily: "var(--font-display)" }}
+              />
+              <div className="p-2 shrink-0">
+                <button
+                  type="submit"
+                  disabled={submitting || !word.trim()}
+                  className="h-full px-3 sm:px-5 rounded-xl bg-ink-900 text-parchment text-sm font-semibold
+                             hover:bg-ink-800 disabled:opacity-30 disabled:cursor-not-allowed
+                             transition-colors duration-150 cursor-pointer border-none"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  {label}
-                </p>
+                  {submitting ? (
+                    <i className="pi pi-spin pi-spinner text-sm" />
+                  ) : (
+                    <i className="pi pi-plus text-sm" />
+                  )}
+                </button>
               </div>
             </div>
-          ))}
+            {submitError && (
+              <p
+                className="text-xs text-red-500 mt-2 pl-1"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {submitError}
+              </p>
+            )}
+          </form>
         </div>
 
-        {/* Progress chart */}
-        <div className="bg-white rounded-2xl border border-surface-200 p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h2
-              className="text-sm font-semibold text-surface-700"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Vocabulary progress
-            </h2>
-            {stats && (
-              <span
-                className="text-xs text-surface-400"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                {stats.totalWords} word{stats.totalWords !== 1 ? "s" : ""} total
-              </span>
+        {/* ── Vocabulary — word counts by level ── */}
+        <div className="rise-in" style={{ animationDelay: "80ms" }}>
+          <h2
+            className="text-xs font-semibold text-surface-500 uppercase tracking-[0.15em] mb-3"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            Vocabulary
+          </h2>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {STAT_CARDS.map(({ key, label, icon, accent }) => {
+              const value = statValues[key];
+              return (
+                <div
+                  key={key}
+                  className="relative bg-white rounded-2xl border border-surface-200 pl-5 pr-4 py-4 overflow-hidden"
+                >
+                  <span
+                    className={`absolute inset-y-0 left-0 w-[3px] ${accent}`}
+                  />
+                  <p
+                    className="text-3xl text-surface-900 leading-none"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {loadingChart ? (
+                      <span className="text-surface-300">—</span>
+                    ) : (
+                      value
+                    )}
+                  </p>
+                  <p
+                    className="text-xs font-medium text-surface-500 mt-2 uppercase tracking-wider flex items-center gap-1.5"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    <i className={`pi ${icon} text-[10px] text-surface-400`} />
+                    {label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Your progress — practice accuracy, today / this week / this month ── */}
+        <div className="rise-in" style={{ animationDelay: "120ms" }}>
+          <h2
+            className="text-xs font-semibold text-surface-500 uppercase tracking-[0.15em] mb-3"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            Your progress
+          </h2>
+
+          <div className="bg-white rounded-2xl border border-surface-200 p-6">
+            {loadingPracticeStats ? (
+              <div className="h-32 flex items-center justify-center">
+                <i className="pi pi-spin pi-spinner text-surface-300 text-xl" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {(
+                  [
+                    ["Today", practiceStats?.today],
+                    ["This week", practiceStats?.thisWeek],
+                    ["This month", practiceStats?.thisMonth],
+                  ] as const
+                ).map(([label, bucket]) => (
+                  <div
+                    key={label}
+                    className="flex flex-col items-center gap-3 sm:border-l sm:first:border-l-0 sm:border-surface-100 sm:pl-6 sm:first:pl-0"
+                  >
+                    <ProgressDonut bucket={bucket} />
+                    <span
+                      className="text-xs font-semibold text-surface-600 uppercase tracking-wider"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {label}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1.5 text-xs text-surface-500">
+                        <span className="w-2 h-2 rounded-full bg-sage-500" />
+                        {bucket?.correct ?? 0} correct
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-surface-500">
+                        <span className="w-2 h-2 rounded-full bg-error-400" />
+                        {bucket?.incorrect ?? 0} missed
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-
-          {loadingChart ? (
-            <div className="h-20 flex items-center justify-center">
-              <i className="pi pi-spin pi-spinner text-surface-300 text-xl" />
-            </div>
-          ) : !stats || chartTotal === 0 ? (
-            <div className="h-20 flex flex-col items-center justify-center gap-2">
-              <p
-                className="text-sm text-surface-400"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                Add your first word to see progress here.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Stacked bar */}
-              <div className="flex h-6 rounded-lg overflow-hidden gap-px mb-5">
-                {LEVELS.map((lvl) => {
-                  const pct =
-                    chartTotal > 0 ? (levelValues[lvl] / chartTotal) * 100 : 0;
-                  if (pct === 0) return null;
-                  return (
-                    <div
-                      key={lvl}
-                      className={`${LEVEL_CONFIG[lvl].bar} transition-all duration-500`}
-                      style={{ width: `${pct}%` }}
-                      title={`${LEVEL_CONFIG[lvl].label}: ${levelValues[lvl]}`}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Legend */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {LEVELS.map((lvl) => {
-                  const cfg = LEVEL_CONFIG[lvl];
-                  const count = levelValues[lvl];
-                  const pct =
-                    chartTotal > 0 ? Math.round((count / chartTotal) * 100) : 0;
-                  return (
-                    <div key={lvl} className={`rounded-xl px-4 py-3 ${cfg.bg}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                        <span
-                          className={`text-xs font-semibold uppercase tracking-wider ${cfg.text}`}
-                          style={{ fontFamily: "var(--font-sans)" }}
-                        >
-                          {cfg.label}
-                        </span>
-                      </div>
-                      <p
-                        className="text-xl font-bold text-surface-900"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {count}
-                      </p>
-                      <p
-                        className="text-xs text-surface-400 mt-0.5"
-                        style={{ fontFamily: "var(--font-sans)" }}
-                      >
-                        {pct}% of total
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </Layout>

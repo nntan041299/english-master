@@ -29,6 +29,18 @@ export interface AnswerResponse {
   newLearningTracking: string;
 }
 
+export interface PracticeStatBucket {
+  correct: number;
+  incorrect: number;
+  total: number;
+}
+
+export interface PracticeStats {
+  today: PracticeStatBucket;
+  thisWeek: PracticeStatBucket;
+  thisMonth: PracticeStatBucket;
+}
+
 export const getPractices = async (): Promise<PracticeItem[]> => {
   const response = await request.get({ path: ENDPOINT.PRACTICES });
   return response.data.data;
@@ -41,5 +53,10 @@ export const answerPractice = async (
     path: `${ENDPOINT.PRACTICES}/answer`,
     body,
   });
+  return response.data.data;
+};
+
+export const getPracticeStats = async (): Promise<PracticeStats> => {
+  const response = await request.get({ path: `${ENDPOINT.PRACTICES}/stats` });
   return response.data.data;
 };

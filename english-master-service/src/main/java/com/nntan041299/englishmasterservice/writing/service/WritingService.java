@@ -11,6 +11,7 @@ import com.nntan041299.englishmasterservice.writing.dto.WritingChallengeAiRespon
 import com.nntan041299.englishmasterservice.writing.dto.WritingChallengeResponse;
 import com.nntan041299.englishmasterservice.writing.dto.WritingFeedbackAiResponse;
 import com.nntan041299.englishmasterservice.writing.dto.WritingFeedbackResponse;
+import com.nntan041299.englishmasterservice.writing.dto.WritingHistoryItemResponse;
 import com.nntan041299.englishmasterservice.writing.dto.WritingIssueResponse;
 import com.nntan041299.englishmasterservice.writing.entity.WritingChallenge;
 import com.nntan041299.englishmasterservice.writing.entity.WritingIssue;
@@ -26,7 +27,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -142,6 +145,13 @@ public class WritingService {
                 submission.getOverallFeedback(),
                 submission.getScore(),
                 issues.stream().map(WritingIssueResponse::from).toList());
+    }
+
+    /** Returns the current user's past writing submissions, most recent first. */
+    @Transactional(readOnly = true)
+    public Page<WritingHistoryItemResponse> getHistory(Pageable pageable) {
+        User user = currentUserProvider.getCurrentUser();
+        return submissionRepository.findByUserId(user.getId(), pageable).map(WritingHistoryItemResponse::from);
     }
 
     private WritingChallengeResponse toResponse(WritingChallenge challenge) {

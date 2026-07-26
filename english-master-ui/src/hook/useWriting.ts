@@ -1,5 +1,9 @@
-import { useMutation } from "@tanstack/react-query";
-import { getWritingChallenge, submitWriting } from "@/service/writing";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  getWritingChallenge,
+  getWritingHistory,
+  submitWriting,
+} from "@/service/writing";
 
 export const useGenerateChallenge = () =>
   useMutation({
@@ -9,4 +13,10 @@ export const useGenerateChallenge = () =>
 export const useSubmitWriting = () =>
   useMutation({
     mutationFn: submitWriting,
+  });
+
+export const useWritingHistory = (page: number, size = 10) =>
+  useQuery({
+    queryKey: ["writing-history", page, size],
+    queryFn: () => getWritingHistory({ page, size }),
   });

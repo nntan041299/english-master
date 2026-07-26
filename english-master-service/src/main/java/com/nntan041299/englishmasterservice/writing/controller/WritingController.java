@@ -1,11 +1,16 @@
 package com.nntan041299.englishmasterservice.writing.controller;
 
+import com.nntan041299.englishmasterservice.common.dto.PageResponse;
 import com.nntan041299.englishmasterservice.writing.dto.SubmitWritingRequest;
 import com.nntan041299.englishmasterservice.writing.dto.WritingChallengeResponse;
 import com.nntan041299.englishmasterservice.writing.dto.WritingFeedbackResponse;
+import com.nntan041299.englishmasterservice.writing.dto.WritingHistoryItemResponse;
 import com.nntan041299.englishmasterservice.writing.service.WritingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,5 +37,11 @@ public class WritingController {
     @PostMapping("/submit")
     public ResponseEntity<WritingFeedbackResponse> submit(@Valid @RequestBody SubmitWritingRequest request) {
         return ResponseEntity.ok(writingService.submit(request));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<PageResponse<WritingHistoryItemResponse>> getHistory(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(writingService.getHistory(pageable)));
     }
 }

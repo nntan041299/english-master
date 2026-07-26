@@ -1,12 +1,17 @@
 package com.nntan041299.englishmasterservice.translation.controller;
 
+import com.nntan041299.englishmasterservice.common.dto.PageResponse;
 import com.nntan041299.englishmasterservice.translation.dto.SubmitTranslationRequest;
 import com.nntan041299.englishmasterservice.translation.dto.TranslationChallengeResponse;
 import com.nntan041299.englishmasterservice.translation.dto.TranslationFeedbackResponse;
+import com.nntan041299.englishmasterservice.translation.dto.TranslationHistoryItemResponse;
 import com.nntan041299.englishmasterservice.translation.entity.TranslationDirection;
 import com.nntan041299.englishmasterservice.translation.service.TranslationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,5 +37,11 @@ public class TranslationController {
     @PostMapping("/submit")
     public ResponseEntity<TranslationFeedbackResponse> submit(@Valid @RequestBody SubmitTranslationRequest request) {
         return ResponseEntity.ok(translationService.submit(request));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<PageResponse<TranslationHistoryItemResponse>> getHistory(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(translationService.getHistory(pageable)));
     }
 }

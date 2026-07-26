@@ -22,6 +22,29 @@ export interface SubmitTranslationRequest {
   translation: string;
 }
 
+export interface TranslationHistoryItem {
+  submissionId: number;
+  challengeId: number;
+  direction: TranslationDirection;
+  level: LanguageLevel;
+  sourceText: string;
+  userTranslation: string;
+  correct: boolean;
+  feedback: string;
+  suggestedTranslation: string;
+  submittedAt: string;
+}
+
+export interface TranslationHistoryPage {
+  content: TranslationHistoryItem[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
 /**
  * Generates a translation challenge at the current user's own language level, in the given
  * direction. Reuses an existing unanswered challenge in that direction/level when one exists.
@@ -41,6 +64,19 @@ export const submitTranslation = async (
   const response = await request.post({
     path: `${ENDPOINT.TRANSLATION}/submit`,
     body,
+  });
+  return response.data.data;
+};
+
+export const getTranslationHistory = async (params: {
+  page?: number;
+  size?: number;
+}): Promise<TranslationHistoryPage> => {
+  const query = new URLSearchParams();
+  query.set("page", String(params.page ?? 0));
+  query.set("size", String(params.size ?? 10));
+  const response = await request.get({
+    path: `${ENDPOINT.TRANSLATION}/history?${query.toString()}`,
   });
   return response.data.data;
 };

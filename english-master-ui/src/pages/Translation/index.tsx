@@ -3,9 +3,11 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import type { AxiosError } from "axios";
 import Layout from "@/layouts/Layout";
+import EmptyState from "@/components/EmptyState";
 import {
   useGenerateTranslationChallenge,
   useSubmitTranslation,
+  useTranslationHistory,
 } from "@/hook/useTranslation";
 import { selectUser } from "@/redux/user/selectors";
 import { languageLevelLabel } from "@/constants/languageLevel";
@@ -13,6 +15,7 @@ import type {
   TranslationChallenge,
   TranslationDirection,
   TranslationFeedback,
+  TranslationHistoryItem,
 } from "@/service/translation";
 
 const DIRECTIONS: { value: TranslationDirection; label: string }[] = [
@@ -20,13 +23,185 @@ const DIRECTIONS: { value: TranslationDirection; label: string }[] = [
   { value: "VI_TO_EN", label: "Vietnamese → English" },
 ];
 
+const HISTORY_PAGE_SIZE = 10;
+
 function targetLanguageOf(direction: TranslationDirection): string {
   return direction === "EN_TO_VI" ? "Vietnamese" : "English";
+}
+
+function directionLabel(direction: TranslationDirection): string {
+  return direction === "EN_TO_VI"
+    ? "English → Vietnamese"
+    : "Vietnamese → English";
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/* ── History item card ── */
+function HistoryCard({ item }: { item: TranslationHistoryItem }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="bg-white rounded-2xl border border-surface-200 px-5 py-4">
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className="w-full flex items-center justify-between gap-3 cursor-pointer border-none bg-transparent p-0 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p
+            className="text-sm font-semibold text-ink-900 truncate"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            “{item.sourceText}”
+          </p>
+          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+            <span className="text-xs font-medium text-surface-400 shrink-0">
+              {directionLabel(item.direction)}
+            </span>
+            <span className="text-xs text-surface-300">·</span>
+            <span
+              className="text-xs text-surface-400"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              {formatDate(item.submittedAt)}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <i
+            className={`pi ${item.correct ? "pi-check-circle text-sage-600" : "pi-times-circle text-error-500"}`}
+          />
+          <i
+            className={`pi ${expanded ? "pi-chevron-up" : "pi-chevron-down"} text-xs text-surface-400`}
+          />
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-surface-100 flex flex-col gap-3">
+          <p
+            className={`text-sm leading-relaxed ${item.correct ? "text-sage-800" : "text-error-700"}`}
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            {item.feedback}
+          </p>
+          <div>
+            <span
+              className="text-xs font-semibold uppercase tracking-widest text-surface-500 block mb-1"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              Your translation
+            </span>
+            <p
+              className="text-sm text-ink-900 leading-relaxed bg-surface-50 rounded-xl px-4 py-3"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              {item.userTranslation}
+            </p>
+          </div>
+          <div>
+            <span
+              className="text-xs font-semibold uppercase tracking-widest text-surface-500 block mb-1"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              Suggested translation
+            </span>
+            <p
+              className="text-sm text-ink-900 leading-relaxed bg-surface-50 rounded-xl px-4 py-3"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              {item.suggestedTranslation}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── History view ── */
+function TranslationHistory() {
+  const [page, setPage] = useState(0);
+  const { data, isLoading } = useTranslationHistory(page, HISTORY_PAGE_SIZE);
+
+  const items = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2 py-10 text-surface-400">
+          <i className="pi pi-spin pi-spinner" />
+          <span className="text-sm" style={{ fontFamily: "var(--font-sans)" }}>
+            Loading…
+          </span>
+        </div>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon="pi-history"
+          title="No submissions yet"
+          description="Your past translation submissions will show up here."
+        />
+      ) : (
+        <>
+          {items.map((item) => (
+            <HistoryCard key={item.submissionId} item={item} />
+          ))}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 pt-2">
+              <button
+                onClick={() => setPage((p) => p - 1)}
+                disabled={data?.first ?? true}
+                className="w-7 h-7 flex items-center justify-center rounded-md border border-surface-200
+                           text-xs text-surface-600 bg-white hover:bg-surface-50
+                           disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <i className="pi pi-chevron-left text-[10px]" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i)}
+                  className={`w-7 h-7 flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer border
+                    ${
+                      i === page
+                        ? "bg-ink-900 text-parchment border-ink-900"
+                        : "bg-white text-surface-600 border-surface-200 hover:bg-surface-50"
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={data?.last ?? true}
+                className="w-7 h-7 flex items-center justify-center rounded-md border border-surface-200
+                           text-xs text-surface-600 bg-white hover:bg-surface-50
+                           disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <i className="pi pi-chevron-right text-[10px]" />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function Translation() {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
+  const [view, setView] = useState<"practice" | "history">("practice");
   const [direction, setDirection] = useState<TranslationDirection>("EN_TO_VI");
   const [challenge, setChallenge] = useState<TranslationChallenge | null>(null);
   const [answer, setAnswer] = useState("");
@@ -97,217 +272,249 @@ export default function Translation() {
                 Translate the sentence below, then get instant AI feedback.
               </p>
             </div>
-            {user.languageLevel && (
-              <button
-                onClick={() => navigate("/account")}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-100 hover:bg-surface-200 transition-colors cursor-pointer"
-                title="Change your level in Account settings"
-              >
-                <span
-                  className="text-xs font-semibold text-surface-700"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {languageLevelLabel(user.languageLevel)}
-                </span>
-                <i className="pi pi-pencil text-[10px] text-surface-400" />
-              </button>
-            )}
-          </div>
-
-          {/* Direction toggle */}
-          <div className="flex items-center gap-1 bg-surface-100 rounded-lg p-1 self-start">
-            {DIRECTIONS.map((d) => (
-              <button
-                key={d.value}
-                onClick={() => handleDirectionChange(d.value)}
-                disabled={busy}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1.5 ${
-                  direction === d.value
-                    ? "bg-white text-ink-900 shadow-sm"
-                    : "text-surface-500 hover:text-surface-700"
-                }`}
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Challenge card */}
-          <div
-            className="bg-white rounded-2xl border border-surface-200 px-6 py-5"
-            style={{ boxShadow: "0 2px 20px 0 rgba(26,31,46,0.06)" }}
-          >
-            <span
-              className="text-xs font-semibold uppercase tracking-widest text-gold-600 block mb-2"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Translate into {targetLanguageOf(direction)}
-            </span>
-
-            {generate.isPending ? (
-              <div className="flex items-center gap-2 py-4 text-surface-400">
-                <i className="pi pi-spin pi-spinner" />
-                <span
-                  className="text-sm"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  Generating a sentence…
-                </span>
-              </div>
-            ) : generate.isError ? (
-              <div className="flex flex-col items-start gap-2 py-2">
-                <p
-                  className="text-sm text-error-500"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  Something went wrong reaching the AI. Please try again.
-                </p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 rounded-lg bg-surface-100 p-1">
                 <button
-                  onClick={() => loadChallenge(direction)}
-                  className="text-xs font-semibold text-ink-900 underline cursor-pointer"
+                  onClick={() => setView("practice")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none transition-colors ${
+                    view === "practice"
+                      ? "bg-white text-ink-900 shadow-sm"
+                      : "bg-transparent text-surface-500 hover:text-surface-700"
+                  }`}
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  Retry
+                  Practice
+                </button>
+                <button
+                  onClick={() => setView("history")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-none transition-colors ${
+                    view === "history"
+                      ? "bg-white text-ink-900 shadow-sm"
+                      : "bg-transparent text-surface-500 hover:text-surface-700"
+                  }`}
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  History
                 </button>
               </div>
-            ) : challenge ? (
-              <p
-                className="text-xl font-semibold text-ink-900 leading-relaxed"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                “{challenge.sourceText}”
-              </p>
-            ) : null}
-          </div>
-
-          {/* Answer area (hidden once feedback is shown) */}
-          {!feedback && challenge && (
-            <div className="flex flex-col gap-3">
-              <textarea
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder={`Type your ${targetLanguageOf(direction)} translation here…`}
-                rows={3}
-                disabled={submit.isPending}
-                className="w-full rounded-2xl border border-surface-200 bg-white px-5 py-4 text-sm text-ink-900 leading-relaxed resize-y outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/20 transition-colors disabled:opacity-60"
-                style={{ fontFamily: "var(--font-sans)" }}
-              />
-              <div className="flex justify-end">
+              {user.languageLevel && (
                 <button
-                  onClick={handleSubmit}
-                  disabled={!answer.trim() || submit.isPending}
-                  className="px-5 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-                  style={{ fontFamily: "var(--font-sans)" }}
+                  onClick={() => navigate("/account")}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-100 hover:bg-surface-200 transition-colors cursor-pointer"
+                  title="Change your level in Account settings"
                 >
-                  {submit.isPending ? (
-                    <>
-                      <i className="pi pi-spin pi-spinner text-xs" />
-                      Checking…
-                    </>
-                  ) : (
-                    <>
-                      <i className="pi pi-check text-xs" />
-                      Check translation
-                    </>
-                  )}
+                  <span
+                    className="text-xs font-semibold text-surface-700"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {languageLevelLabel(user.languageLevel)}
+                  </span>
+                  <i className="pi pi-pencil text-[10px] text-surface-400" />
                 </button>
-              </div>
-              {submitError && (
-                <p
-                  className="text-xs text-error-500"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {submitError}
-                </p>
               )}
             </div>
-          )}
+          </div>
 
-          {/* Feedback */}
-          {feedback && (
-            <div className="flex flex-col gap-4">
-              <div
-                className={`rounded-2xl border px-6 py-5 flex items-start gap-3 ${
-                  feedback.correct
-                    ? "bg-sage-50 border-sage-100"
-                    : "bg-error-50 border-error-100"
-                }`}
-              >
-                <i
-                  className={`pi ${feedback.correct ? "pi-check-circle text-sage-600" : "pi-times-circle text-error-500"} text-xl mt-0.5`}
-                />
-                <div>
-                  <p
-                    className={`text-sm font-bold mb-1 ${feedback.correct ? "text-sage-800" : "text-error-600"}`}
+          {view === "history" && <TranslationHistory />}
+
+          {view === "practice" && (
+            <>
+              {/* Direction toggle */}
+              <div className="flex items-center gap-1 bg-surface-100 rounded-lg p-1 self-start">
+                {DIRECTIONS.map((d) => (
+                  <button
+                    key={d.value}
+                    onClick={() => handleDirectionChange(d.value)}
+                    disabled={busy}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1.5 ${
+                      direction === d.value
+                        ? "bg-white text-ink-900 shadow-sm"
+                        : "text-surface-500 hover:text-surface-700"
+                    }`}
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                    {feedback.correct ? "Correct!" : "Not quite right"}
-                  </p>
-                  <p
-                    className={`text-sm leading-relaxed ${feedback.correct ? "text-sage-800" : "text-error-700"}`}
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {feedback.feedback}
-                  </p>
-                </div>
+                    {d.label}
+                  </button>
+                ))}
               </div>
 
+              {/* Challenge card */}
               <div
                 className="bg-white rounded-2xl border border-surface-200 px-6 py-5"
                 style={{ boxShadow: "0 2px 20px 0 rgba(26,31,46,0.06)" }}
               >
                 <span
-                  className="text-xs font-semibold uppercase tracking-widest text-surface-500 block mb-2"
+                  className="text-xs font-semibold uppercase tracking-widest text-gold-600 block mb-2"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  Your translation
+                  Translate into {targetLanguageOf(direction)}
                 </span>
-                <p
-                  className="text-sm text-ink-900 leading-relaxed"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {answer}
-                </p>
-              </div>
 
-              <div
-                className="bg-white rounded-2xl border border-surface-200 px-6 py-5"
-                style={{ boxShadow: "0 2px 20px 0 rgba(26,31,46,0.06)" }}
-              >
-                <span
-                  className="text-xs font-semibold uppercase tracking-widest text-surface-500 block mb-2"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  Suggested translation
-                </span>
-                <p
-                  className="text-sm text-ink-900 leading-relaxed"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {feedback.suggestedTranslation}
-                </p>
-              </div>
-
-              <button
-                onClick={handleNext}
-                disabled={generate.isPending}
-                className="w-full px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
                 {generate.isPending ? (
-                  <>
-                    <i className="pi pi-spin pi-spinner text-xs" />
-                    Loading…
-                  </>
-                ) : (
-                  <>
-                    Next sentence
-                    <i className="pi pi-arrow-right text-xs" />
-                  </>
-                )}
-              </button>
-            </div>
+                  <div className="flex items-center gap-2 py-4 text-surface-400">
+                    <i className="pi pi-spin pi-spinner" />
+                    <span
+                      className="text-sm"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      Generating a sentence…
+                    </span>
+                  </div>
+                ) : generate.isError ? (
+                  <div className="flex flex-col items-start gap-2 py-2">
+                    <p
+                      className="text-sm text-error-500"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      Something went wrong reaching the AI. Please try again.
+                    </p>
+                    <button
+                      onClick={() => loadChallenge(direction)}
+                      className="text-xs font-semibold text-ink-900 underline cursor-pointer"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : challenge ? (
+                  <p
+                    className="text-xl font-semibold text-ink-900 leading-relaxed"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    “{challenge.sourceText}”
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Answer area (hidden once feedback is shown) */}
+              {!feedback && challenge && (
+                <div className="flex flex-col gap-3">
+                  <textarea
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder={`Type your ${targetLanguageOf(direction)} translation here…`}
+                    rows={3}
+                    disabled={submit.isPending}
+                    className="w-full rounded-2xl border border-surface-200 bg-white px-5 py-4 text-sm text-ink-900 leading-relaxed resize-y outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/20 transition-colors disabled:opacity-60"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!answer.trim() || submit.isPending}
+                      className="px-5 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {submit.isPending ? (
+                        <>
+                          <i className="pi pi-spin pi-spinner text-xs" />
+                          Checking…
+                        </>
+                      ) : (
+                        <>
+                          <i className="pi pi-check text-xs" />
+                          Check translation
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {submitError && (
+                    <p
+                      className="text-xs text-error-500"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {submitError}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Feedback */}
+              {feedback && (
+                <div className="flex flex-col gap-4">
+                  <div
+                    className={`rounded-2xl border px-6 py-5 flex items-start gap-3 ${
+                      feedback.correct
+                        ? "bg-sage-50 border-sage-100"
+                        : "bg-error-50 border-error-100"
+                    }`}
+                  >
+                    <i
+                      className={`pi ${feedback.correct ? "pi-check-circle text-sage-600" : "pi-times-circle text-error-500"} text-xl mt-0.5`}
+                    />
+                    <div>
+                      <p
+                        className={`text-sm font-bold mb-1 ${feedback.correct ? "text-sage-800" : "text-error-600"}`}
+                        style={{ fontFamily: "var(--font-sans)" }}
+                      >
+                        {feedback.correct ? "Correct!" : "Not quite right"}
+                      </p>
+                      <p
+                        className={`text-sm leading-relaxed ${feedback.correct ? "text-sage-800" : "text-error-700"}`}
+                        style={{ fontFamily: "var(--font-sans)" }}
+                      >
+                        {feedback.feedback}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="bg-white rounded-2xl border border-surface-200 px-6 py-5"
+                    style={{ boxShadow: "0 2px 20px 0 rgba(26,31,46,0.06)" }}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-widest text-surface-500 block mb-2"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      Your translation
+                    </span>
+                    <p
+                      className="text-sm text-ink-900 leading-relaxed"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {answer}
+                    </p>
+                  </div>
+
+                  <div
+                    className="bg-white rounded-2xl border border-surface-200 px-6 py-5"
+                    style={{ boxShadow: "0 2px 20px 0 rgba(26,31,46,0.06)" }}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-widest text-surface-500 block mb-2"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      Suggested translation
+                    </span>
+                    <p
+                      className="text-sm text-ink-900 leading-relaxed"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {feedback.suggestedTranslation}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleNext}
+                    disabled={generate.isPending}
+                    className="w-full px-4 py-2.5 rounded-lg bg-ink-900 text-parchment text-sm font-semibold cursor-pointer border-none hover:bg-ink-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {generate.isPending ? (
+                      <>
+                        <i className="pi pi-spin pi-spinner text-xs" />
+                        Loading…
+                      </>
+                    ) : (
+                      <>
+                        Next sentence
+                        <i className="pi pi-arrow-right text-xs" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

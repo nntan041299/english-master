@@ -117,17 +117,12 @@ job:
         enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:false}
         cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
 
-  word:
-    enrichment:
-      enabled: ${WORD_ENRICHMENT_ENABLED:false}
-      cron: ${WORD_ENRICHMENT_CRON:*/5 * * * * *}
-
   meaning:
     practice:
-      enabled: ${WORD_MEANING_PRACTICE_ENABLED:false}
+      enabled: ${WORD_MEANING_PRACTICE_ENABLED:true}
       cron: ${WORD_MEANING_PRACTICE_CRON:*/5 * * * * *}
 
   practice:
     assignment:
-      enabled: ${WORD_PRACTICE_ASSIGNMENT_ENABLED:false}
+      enabled: ${WORD_PRACTICE_ASSIGNMENT_ENABLED:true}
       cron: ${WORD_PRACTICE_ASSIGNMENT_CRON:*/5 * * * * *}

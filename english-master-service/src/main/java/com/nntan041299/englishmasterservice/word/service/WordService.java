@@ -2,6 +2,7 @@ package com.nntan041299.englishmasterservice.word.service;
 
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
+import com.nntan041299.englishmasterservice.meaning.service.MeaningService;
 import com.nntan041299.englishmasterservice.word.dto.DashboardResponse;
 import com.nntan041299.englishmasterservice.word.dto.SaveWordRequest;
 import com.nntan041299.englishmasterservice.word.dto.WordResponse;
@@ -34,6 +35,7 @@ public class WordService {
     private final UserPracticeResultRepository userPracticeResultRepository;
     private final WordMapper wordMapper;
     private final CurrentUserProvider currentUserProvider;
+    private final MeaningService meaningService;
 
     @Transactional
     public WordResponse saveWord(SaveWordRequest request) {
@@ -50,6 +52,10 @@ public class WordService {
                                 .text(normalizedText)
                                 .build()
                 ));
+
+        if (word.getMeanings().isEmpty()) {
+            meaningService.enrich(word);
+        }
 
         UserWord userWord = userWordRepository.findByUserIdAndWordId(currentUser.getId(), word.getId())
                 .orElseGet(() -> userWordRepository.save(

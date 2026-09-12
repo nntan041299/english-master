@@ -22,14 +22,13 @@ public interface UserPracticeRepository extends JpaRepository<UserPractice, Long
      */
     @Query("""
             SELECT new com.nntan041299.englishmasterservice.practice.dto.MissingPracticeAssignment(
-                uw.user.id, p.id, m.id, p.creationSource)
-            FROM UserWord uw
-            JOIN uw.word w
+                w.user.id, p.id, m.id, p.creationSource)
+            FROM Word w
             JOIN w.meanings m
             JOIN Practice p ON p.meaning = m
             WHERE NOT EXISTS (
                 SELECT 1 FROM UserPractice up
-                WHERE up.user.id = uw.user.id
+                WHERE up.user.id = w.user.id
                   AND up.practice.meaning = m
                   AND up.practice.creationSource = p.creationSource
             )

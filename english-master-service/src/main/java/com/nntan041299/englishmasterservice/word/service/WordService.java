@@ -7,12 +7,10 @@ import com.nntan041299.englishmasterservice.word.dto.DashboardResponse;
 import com.nntan041299.englishmasterservice.word.dto.SaveWordRequest;
 import com.nntan041299.englishmasterservice.word.dto.WordResponse;
 import com.nntan041299.englishmasterservice.word.entity.LearningLevel;
-import com.nntan041299.englishmasterservice.word.entity.UserWord;
 import com.nntan041299.englishmasterservice.word.entity.Word;
 import com.nntan041299.englishmasterservice.word.mapper.WordMapper;
 import com.nntan041299.englishmasterservice.practice.repository.UserPracticeRepository;
 import com.nntan041299.englishmasterservice.practice.repository.UserPracticeResultRepository;
-import com.nntan041299.englishmasterservice.word.repository.UserWordRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordAvgPoint;
 import java.util.List;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Service;
 public class WordService {
 
     private final WordRepository wordRepository;
-    private final UserWordRepository userWordRepository;
     private final UserPracticeRepository userPracticeRepository;
     private final UserPracticeResultRepository userPracticeResultRepository;
     private final WordMapper wordMapper;
@@ -46,9 +43,10 @@ public class WordService {
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        Word word = wordRepository.findByText(normalizedText)
+        Word word = wordRepository.findByUserIdAndText(currentUser.getId(), normalizedText)
                 .orElseGet(() -> wordRepository.save(
                         Word.builder()
+                                .user(currentUser)
                                 .text(normalizedText)
                                 .build()
                 ));
@@ -57,41 +55,32 @@ public class WordService {
             meaningService.enrich(word);
         }
 
-        UserWord userWord = userWordRepository.findByUserIdAndWordId(currentUser.getId(), word.getId())
-                .orElseGet(() -> userWordRepository.save(
-                        UserWord.builder()
-                                .user(currentUser)
-                                .word(word)
-                                .build()
-                ));
-
-        return wordMapper.toResponse(userWord, LearningLevel.NEW);
+        return wordMapper.toResponse(word, LearningLevel.NEW);
     }
 
     @Transactional(readOnly = true)
     public Page<WordResponse> searchWords(String keyword, Pageable pageable) {
         User currentUser = currentUserProvider.getCurrentUser();
 
-        Page<UserWord> page = (keyword == null || keyword.isBlank())
-                ? userWordRepository.findByUserId(currentUser.getId(), pageable)
-                : userWordRepository.findByUserIdAndWordTextContaining(currentUser.getId(), keyword.trim().toLowerCase(), pageable);
+        Page<Word> page = (keyword == null || keyword.isBlank())
+                ? wordRepository.findByUserId(currentUser.getId(), pageable)
+                : wordRepository.findByUserIdAndTextContaining(currentUser.getId(), keyword.trim().toLowerCase(), pageable);
 
-        List<Long> wordIds = page.map(uw -> uw.getWord().getId()).toList();
+        List<Long> wordIds = page.map(Word::getId).toList();
 
         // Fetch meanings in a single query for the current page only
-        List<Long> ids = page.map(UserWord::getId).toList();
-        Map<Long, UserWord> withMeanings = userWordRepository.findByIdsWithMeanings(ids)
+        Map<Long, Word> withMeanings = wordRepository.findByIdsWithMeanings(wordIds)
                 .stream()
-                .collect(Collectors.toMap(UserWord::getId, Function.identity()));
+                .collect(Collectors.toMap(Word::getId, Function.identity()));
 
         Map<Long, Double> avgPointByWordId = userPracticeRepository
                 .findAvgPointByUserIdAndWordIds(currentUser.getId(), wordIds)
                 .stream()
                 .collect(Collectors.toMap(WordAvgPoint::getWordId, WordAvgPoint::getAvgPoint));
 
-        return page.map(uw -> {
-            UserWord resolved = withMeanings.getOrDefault(uw.getId(), uw);
-            double avgPoint = avgPointByWordId.getOrDefault(resolved.getWord().getId(), 0.0);
+        return page.map(w -> {
+            Word resolved = withMeanings.getOrDefault(w.getId(), w);
+            double avgPoint = avgPointByWordId.getOrDefault(resolved.getId(), 0.0);
             return wordMapper.toResponse(resolved, LearningLevel.fromAveragePoint(avgPoint));
         });
     }
@@ -101,7 +90,7 @@ public class WordService {
         User currentUser = currentUserProvider.getCurrentUser();
         Long userId = currentUser.getId();
 
-        long totalWords = userWordRepository.countByUserId(userId);
+        long totalWords = wordRepository.countByUserId(userId);
 
         Map<Long, Double> avgPointByWordId = userPracticeRepository.findAvgPointByUserId(userId)
                 .stream()

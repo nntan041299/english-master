@@ -8,6 +8,7 @@ import com.nntan041299.englishmasterservice.meaning.dto.MeaningAiResponse;
 import com.nntan041299.englishmasterservice.meaning.entity.Category;
 import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import com.nntan041299.englishmasterservice.meaning.entity.PartOfSpeech;
+import com.nntan041299.englishmasterservice.meaning.exception.InvalidWordException;
 import com.nntan041299.englishmasterservice.meaning.repository.CategoryRepository;
 import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository;
 import com.nntan041299.englishmasterservice.word.entity.Word;
@@ -66,7 +67,8 @@ public class MeaningService {
 
         if (meanings.isEmpty()) {
             log.warn("word_enrichment no_meaning_generated word={}", word.getText());
-            return;
+            throw new InvalidWordException(
+                    "\"" + word.getText() + "\" doesn't look like a valid English word. Please check the spelling and try again.");
         }
 
         meaningRepository.saveAll(meanings);

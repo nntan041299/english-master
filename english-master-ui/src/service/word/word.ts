@@ -62,3 +62,33 @@ export const getWords = async (params: {
   });
   return response.data.data;
 };
+
+export interface UpdateWordRequest {
+  text?: string;
+  meanings?: { id: number; meaning?: string }[];
+}
+
+// Partial update for a word — meaning edits are just one part of what can be updated;
+// new word-level fields can be passed here later without a new endpoint.
+export const updateWord = async (
+  wordId: number,
+  updates: UpdateWordRequest,
+): Promise<WordItem> => {
+  const response = await request.patch({
+    path: `${ENDPOINT.WORDS}/${wordId}`,
+    body: { ...updates },
+  });
+  return response.data.data;
+};
+
+export const updateMeaning = async (
+  wordId: number,
+  meaningId: number,
+  meaning: string,
+): Promise<WordItem> => {
+  return updateWord(wordId, { meanings: [{ id: meaningId, meaning }] });
+};
+
+export const deleteWord = async (wordId: number): Promise<void> => {
+  await request.delete({ path: `${ENDPOINT.WORDS}/${wordId}` });
+};

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { AxiosError } from "axios";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,8 +135,12 @@ const Dashboard = () => {
       await createWord(trimmed);
       setWord("");
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    } catch {
-      setSubmitError("Couldn't add that word. Try again.");
+    } catch (err) {
+      const apiError = err as AxiosError<{ data: { message?: string } }>;
+      setSubmitError(
+        apiError.response?.data?.data?.message ||
+          "Couldn't add that word. Try again.",
+      );
     } finally {
       setSubmitting(false);
     }

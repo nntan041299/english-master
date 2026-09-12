@@ -13,6 +13,8 @@ public interface WordRepository extends JpaRepository<Word, Long> {
 
     Optional<Word> findByUserIdAndText(Long userId, String text);
 
+    Optional<Word> findByIdAndUserId(Long id, Long userId);
+
     long countByUserId(Long userId);
 
     // Step 1: paginate by ID only (no collection fetch — DB does the pagination)

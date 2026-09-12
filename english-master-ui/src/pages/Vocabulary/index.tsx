@@ -2,13 +2,98 @@ import { useState, useEffect } from "react";
 import Layout from "@/layouts/Layout";
 import LevelBadge from "@/components/LevelBadge";
 import EmptyState from "@/components/EmptyState";
-import { createWord, getWords } from "@/service/word";
+import { createWord, deleteWord, getWords, updateMeaning } from "@/service/word";
 import type { WordItem, WordMeaning, WordPage } from "@/service/word";
 
 const PAGE_SIZE = 10;
 
+interface EditingMeaning {
+  wordId: number;
+  meaningId: number;
+  text: string;
+}
+
+interface RowActions {
+  editing: EditingMeaning | null;
+  savingEdit: boolean;
+  deletingWordId: number | null;
+  onStartEdit: (wordId: number, meaning: WordMeaning) => void;
+  onEditTextChange: (text: string) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onDeleteWord: (wordId: number) => void;
+}
+
+/* ── Inline "meaning" editor, shared by the card and table layouts ── */
+function MeaningText({
+  w,
+  m,
+  actions,
+}: {
+  w: WordItem;
+  m: WordMeaning;
+  actions: RowActions;
+}) {
+  const { editing, savingEdit } = actions;
+  const isEditing = editing?.wordId === w.id && editing?.meaningId === m.id;
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-1.5 flex-1 min-w-[160px]">
+        <input
+          autoFocus
+          value={editing.text}
+          onChange={(e) => actions.onEditTextChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") actions.onSaveEdit();
+            if (e.key === "Escape") actions.onCancelEdit();
+          }}
+          className="flex-1 min-w-0 px-2 py-1 rounded-md border border-ink-700 bg-white
+                     text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-ink-900/20"
+          style={{ fontFamily: "var(--font-sans)" }}
+        />
+        <button
+          onClick={actions.onSaveEdit}
+          disabled={savingEdit || !editing.text.trim()}
+          className="w-6 h-6 flex items-center justify-center rounded-md text-emerald-700
+                     hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed
+                     transition-colors cursor-pointer border-none bg-transparent"
+          title="Save"
+        >
+          <i className={`pi ${savingEdit ? "pi-spin pi-spinner" : "pi-check"} text-xs`} />
+        </button>
+        <button
+          onClick={actions.onCancelEdit}
+          disabled={savingEdit}
+          className="w-6 h-6 flex items-center justify-center rounded-md text-surface-500
+                     hover:bg-surface-100 disabled:opacity-40 disabled:cursor-not-allowed
+                     transition-colors cursor-pointer border-none bg-transparent"
+          title="Cancel"
+        >
+          <i className="pi pi-times text-xs" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <span className="group inline-flex items-center gap-1.5">
+      {m.meaning}
+      <button
+        onClick={() => actions.onStartEdit(w.id, m)}
+        className="w-5 h-5 flex items-center justify-center rounded-md text-surface-300
+                   hover:text-ink-700 hover:bg-surface-100 opacity-0 group-hover:opacity-100
+                   transition-colors cursor-pointer border-none bg-transparent shrink-0"
+        title="Edit meaning"
+      >
+        <i className="pi pi-pencil text-[10px]" />
+      </button>
+    </span>
+  );
+}
+
 /* ── Mobile card ── */
-function WordCard({ w }: { w: WordItem }) {
+function WordCard({ w, actions }: { w: WordItem; actions: RowActions }) {
   return (
     <div className="px-4 py-3.5 border-b border-surface-100 last:border-0">
       <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -18,7 +103,19 @@ function WordCard({ w }: { w: WordItem }) {
         >
           {w.text}
         </span>
-        <LevelBadge level={w.learningLevel} />
+        <div className="flex items-center gap-2 shrink-0">
+          <LevelBadge level={w.learningLevel} />
+          <button
+            onClick={() => actions.onDeleteWord(w.id)}
+            disabled={actions.deletingWordId === w.id}
+            className="w-6 h-6 flex items-center justify-center rounded-md text-surface-400
+                       hover:text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed
+                       transition-colors cursor-pointer border-none bg-transparent"
+            title="Delete word"
+          >
+            <i className={`pi ${actions.deletingWordId === w.id ? "pi-spin pi-spinner" : "pi-trash"} text-xs`} />
+          </button>
+        </div>
       </div>
       <div className="flex flex-col gap-1">
         {(w.meanings ?? []).map((m: WordMeaning) => (
@@ -27,7 +124,7 @@ function WordCard({ w }: { w: WordItem }) {
               {m.partOfSpeech.toLowerCase()}
             </span>
             <span className="text-sm text-surface-600 leading-snug">
-              {m.meaning}
+              <MeaningText w={w} m={m} actions={actions} />
             </span>
             {m.ipa && (
               <span className="text-xs text-surface-400 font-mono">
@@ -58,7 +155,17 @@ function WordCard({ w }: { w: WordItem }) {
 }
 
 /* ── Desktop table rows: one row per meaning, word/level cells span all of a word's rows ── */
-function WordRow({ w, idx, page }: { w: WordItem; idx: number; page: number }) {
+function WordRow({
+  w,
+  idx,
+  page,
+  actions,
+}: {
+  w: WordItem;
+  idx: number;
+  page: number;
+  actions: RowActions;
+}) {
   const meanings = w.meanings ?? [];
   const rowCount = Math.max(meanings.length, 1);
 
@@ -101,7 +208,7 @@ function WordRow({ w, idx, page }: { w: WordItem; idx: number; page: number }) {
               )}
             </td>
             <td className="px-5 py-3.5 text-sm text-surface-700">
-              {m?.meaning}
+              {m && <MeaningText w={w} m={m} actions={actions} />}
             </td>
             <td className="px-5 py-3.5 text-xs text-surface-400 font-mono">
               {m?.ipa}
@@ -126,6 +233,20 @@ function WordRow({ w, idx, page }: { w: WordItem; idx: number; page: number }) {
                 <LevelBadge level={w.learningLevel} />
               </td>
             )}
+            {mIdx === 0 && (
+              <td rowSpan={rowCount} className="px-5 py-3.5 align-top">
+                <button
+                  onClick={() => actions.onDeleteWord(w.id)}
+                  disabled={actions.deletingWordId === w.id}
+                  className="w-7 h-7 flex items-center justify-center rounded-md text-surface-400
+                             hover:text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed
+                             transition-colors cursor-pointer border-none bg-transparent"
+                  title="Delete word"
+                >
+                  <i className={`pi ${actions.deletingWordId === w.id ? "pi-spin pi-spinner" : "pi-trash"} text-xs`} />
+                </button>
+              </td>
+            )}
           </tr>
         );
       })}
@@ -142,6 +263,9 @@ const Vocabulary = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [editing, setEditing] = useState<EditingMeaning | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingWordId, setDeletingWordId] = useState<number | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -181,6 +305,42 @@ const Vocabulary = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editing || !editing.text.trim()) return;
+    setSavingEdit(true);
+    try {
+      await updateMeaning(editing.wordId, editing.meaningId, editing.text.trim());
+      setEditing(null);
+      setRefreshKey((k) => k + 1);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteWord = async (wordId: number) => {
+    if (!window.confirm("Delete this word and all its progress? This can't be undone.")) return;
+    setDeletingWordId(wordId);
+    try {
+      await deleteWord(wordId);
+      setRefreshKey((k) => k + 1);
+    } finally {
+      setDeletingWordId(null);
+    }
+  };
+
+  const rowActions: RowActions = {
+    editing,
+    savingEdit,
+    deletingWordId,
+    onStartEdit: (wordId, meaning) =>
+      setEditing({ wordId, meaningId: meaning.id, text: meaning.meaning }),
+    onEditTextChange: (text) =>
+      setEditing((prev) => (prev ? { ...prev, text } : prev)),
+    onSaveEdit: handleSaveEdit,
+    onCancelEdit: () => setEditing(null),
+    onDeleteWord: handleDeleteWord,
   };
 
   const words: WordItem[] = data?.content ?? [];
@@ -295,7 +455,7 @@ const Vocabulary = () => {
                   {/* Mobile: card list */}
                   <div className="sm:hidden">
                     {words.map((w) => (
-                      <WordCard key={w.id} w={w} />
+                      <WordCard key={w.id} w={w} actions={rowActions} />
                     ))}
                   </div>
 
@@ -327,11 +487,14 @@ const Vocabulary = () => {
                         <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                           Level
                         </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {words.map((w, idx) => (
-                        <WordRow key={w.id} w={w} idx={idx} page={page} />
+                        <WordRow key={w.id} w={w} idx={idx} page={page} actions={rowActions} />
                       ))}
                     </tbody>
                   </table>

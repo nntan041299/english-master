@@ -2,9 +2,14 @@ package com.nntan041299.englishmasterservice.word.service;
 
 import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.auth.service.CurrentUserProvider;
+import com.nntan041299.englishmasterservice.common.util.StringUtils;
+import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
+import com.nntan041299.englishmasterservice.meaning.repository.MeaningRepository;
 import com.nntan041299.englishmasterservice.meaning.service.MeaningService;
 import com.nntan041299.englishmasterservice.word.dto.DashboardResponse;
 import com.nntan041299.englishmasterservice.word.dto.SaveWordRequest;
+import com.nntan041299.englishmasterservice.word.dto.UpdateMeaningRequest;
+import com.nntan041299.englishmasterservice.word.dto.UpdateWordRequest;
 import com.nntan041299.englishmasterservice.word.dto.WordResponse;
 import com.nntan041299.englishmasterservice.word.entity.LearningLevel;
 import com.nntan041299.englishmasterservice.word.entity.Word;
@@ -13,6 +18,7 @@ import com.nntan041299.englishmasterservice.practice.repository.UserPracticeRepo
 import com.nntan041299.englishmasterservice.practice.repository.UserPracticeResultRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordRepository;
 import com.nntan041299.englishmasterservice.word.repository.WordAvgPoint;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -28,6 +34,7 @@ import org.springframework.stereotype.Service;
 public class WordService {
 
     private final WordRepository wordRepository;
+    private final MeaningRepository meaningRepository;
     private final UserPracticeRepository userPracticeRepository;
     private final UserPracticeResultRepository userPracticeResultRepository;
     private final WordMapper wordMapper;
@@ -83,6 +90,71 @@ public class WordService {
             double avgPoint = avgPointByWordId.getOrDefault(resolved.getId(), 0.0);
             return wordMapper.toResponse(resolved, LearningLevel.fromAveragePoint(avgPoint));
         });
+    }
+
+    @Transactional
+    public WordResponse updateWord(Long wordId, UpdateWordRequest request) {
+        User currentUser = currentUserProvider.getCurrentUser();
+
+        Word word = wordRepository.findByIdAndUserId(wordId, currentUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Word not found: " + wordId));
+
+        if (request.getText() != null) {
+            applyTextUpdate(word, request.getText(), currentUser.getId());
+        }
+
+        if (request.getMeanings() != null) {
+            for (UpdateMeaningRequest meaningUpdate : request.getMeanings()) {
+                Meaning meaning = meaningRepository.findById(meaningUpdate.getId())
+                        .filter(m -> m.getWord().getId().equals(wordId))
+                        .orElseThrow(() -> new EntityNotFoundException("Meaning not found: " + meaningUpdate.getId()));
+                applyMeaningUpdate(meaning, meaningUpdate);
+                meaningRepository.save(meaning);
+            }
+        }
+
+        double avgPoint = userPracticeRepository
+                .findAvgPointByUserIdAndWordIds(currentUser.getId(), List.of(wordId))
+                .stream()
+                .findFirst()
+                .map(WordAvgPoint::getAvgPoint)
+                .orElse(0.0);
+
+        return wordMapper.toResponse(word, LearningLevel.fromAveragePoint(avgPoint));
+    }
+
+    private void applyTextUpdate(Word word, String text, Long userId) {
+        String trimmed = text.trim().toLowerCase();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException("Word text must not be blank");
+        }
+        wordRepository.findByUserIdAndText(userId, trimmed)
+                .filter(other -> !other.getId().equals(word.getId()))
+                .ifPresent(other -> {
+                    throw new IllegalArgumentException("You already have a word with this text");
+                });
+        word.setText(trimmed);
+    }
+
+    /** Applies whichever fields are present on the request; absent (null) fields are left untouched. */
+    private void applyMeaningUpdate(Meaning meaning, UpdateMeaningRequest request) {
+        if (request.getMeaning() != null) {
+            String trimmed = request.getMeaning().trim();
+            if (trimmed.isEmpty()) {
+                throw new IllegalArgumentException("Meaning text must not be blank");
+            }
+            meaning.setMeaning(StringUtils.capitalizeFirst(trimmed));
+        }
+    }
+
+    @Transactional
+    public void deleteWord(Long wordId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+
+        Word word = wordRepository.findByIdAndUserId(wordId, currentUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Word not found: " + wordId));
+
+        wordRepository.delete(word);
     }
 
     @Transactional(readOnly = true)

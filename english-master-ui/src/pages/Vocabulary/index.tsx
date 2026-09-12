@@ -3,6 +3,7 @@ import type { AxiosError } from "axios";
 import Layout from "@/layouts/Layout";
 import LevelBadge from "@/components/LevelBadge";
 import EmptyState from "@/components/EmptyState";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   createWord,
   deleteWord,
@@ -279,6 +280,9 @@ const Vocabulary = () => {
   const [editing, setEditing] = useState<EditingMeaning | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingWordId, setDeletingWordId] = useState<number | null>(null);
+  const [confirmDeleteWordId, setConfirmDeleteWordId] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -343,19 +347,20 @@ const Vocabulary = () => {
     }
   };
 
-  const handleDeleteWord = async (wordId: number) => {
-    if (
-      !window.confirm(
-        "Delete this word and all its progress? This can't be undone.",
-      )
-    )
-      return;
+  const handleDeleteWord = (wordId: number) => {
+    setConfirmDeleteWordId(wordId);
+  };
+
+  const confirmDeleteWord = async () => {
+    if (confirmDeleteWordId === null) return;
+    const wordId = confirmDeleteWordId;
     setDeletingWordId(wordId);
     try {
       await deleteWord(wordId);
       setRefreshKey((k) => k + 1);
     } finally {
       setDeletingWordId(null);
+      setConfirmDeleteWordId(null);
     }
   };
 
@@ -598,6 +603,17 @@ const Vocabulary = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteWordId !== null}
+        title="Delete this word?"
+        description="This removes the word and all its practice progress. This can't be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deletingWordId !== null}
+        onConfirm={confirmDeleteWord}
+        onCancel={() => setConfirmDeleteWordId(null)}
+      />
     </Layout>
   );
 };

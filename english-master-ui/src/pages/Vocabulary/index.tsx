@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
+import type { AxiosError } from "axios";
 import Layout from "@/layouts/Layout";
 import LevelBadge from "@/components/LevelBadge";
 import EmptyState from "@/components/EmptyState";
-import { createWord, deleteWord, getWords, updateMeaning } from "@/service/word";
+import {
+  createWord,
+  deleteWord,
+  getWords,
+  updateMeaning,
+} from "@/service/word";
 import type { WordItem, WordMeaning, WordPage } from "@/service/word";
 
 const PAGE_SIZE = 10;
@@ -60,7 +66,9 @@ function MeaningText({
                      transition-colors cursor-pointer border-none bg-transparent"
           title="Save"
         >
-          <i className={`pi ${savingEdit ? "pi-spin pi-spinner" : "pi-check"} text-xs`} />
+          <i
+            className={`pi ${savingEdit ? "pi-spin pi-spinner" : "pi-check"} text-xs`}
+          />
         </button>
         <button
           onClick={actions.onCancelEdit}
@@ -113,7 +121,9 @@ function WordCard({ w, actions }: { w: WordItem; actions: RowActions }) {
                        transition-colors cursor-pointer border-none bg-transparent"
             title="Delete word"
           >
-            <i className={`pi ${actions.deletingWordId === w.id ? "pi-spin pi-spinner" : "pi-trash"} text-xs`} />
+            <i
+              className={`pi ${actions.deletingWordId === w.id ? "pi-spin pi-spinner" : "pi-trash"} text-xs`}
+            />
           </button>
         </div>
       </div>
@@ -243,7 +253,9 @@ function WordRow({
                              transition-colors cursor-pointer border-none bg-transparent"
                   title="Delete word"
                 >
-                  <i className={`pi ${actions.deletingWordId === w.id ? "pi-spin pi-spinner" : "pi-trash"} text-xs`} />
+                  <i
+                    className={`pi ${actions.deletingWordId === w.id ? "pi-spin pi-spinner" : "pi-trash"} text-xs`}
+                  />
                 </button>
               </td>
             )}
@@ -262,6 +274,7 @@ const Vocabulary = () => {
   const [data, setData] = useState<WordPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [addError, setAddError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [editing, setEditing] = useState<EditingMeaning | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -295,6 +308,7 @@ const Vocabulary = () => {
     e.preventDefault();
     if (!word.trim()) return;
     setSubmitting(true);
+    setAddError("");
     try {
       await createWord(word.trim());
       setWord("");
@@ -302,6 +316,12 @@ const Vocabulary = () => {
       setDebouncedSearch("");
       setPage(0);
       setRefreshKey((k) => k + 1);
+    } catch (err) {
+      const apiError = err as AxiosError<{ data: { message?: string } }>;
+      setAddError(
+        apiError.response?.data?.data?.message ||
+          "Couldn't add this word right now. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -311,7 +331,11 @@ const Vocabulary = () => {
     if (!editing || !editing.text.trim()) return;
     setSavingEdit(true);
     try {
-      await updateMeaning(editing.wordId, editing.meaningId, editing.text.trim());
+      await updateMeaning(
+        editing.wordId,
+        editing.meaningId,
+        editing.text.trim(),
+      );
       setEditing(null);
       setRefreshKey((k) => k + 1);
     } finally {
@@ -320,7 +344,12 @@ const Vocabulary = () => {
   };
 
   const handleDeleteWord = async (wordId: number) => {
-    if (!window.confirm("Delete this word and all its progress? This can't be undone.")) return;
+    if (
+      !window.confirm(
+        "Delete this word and all its progress? This can't be undone.",
+      )
+    )
+      return;
     setDeletingWordId(wordId);
     try {
       await deleteWord(wordId);
@@ -364,7 +393,10 @@ const Vocabulary = () => {
             <input
               type="text"
               value={word}
-              onChange={(e) => setWord(e.target.value)}
+              onChange={(e) => {
+                setWord(e.target.value);
+                if (addError) setAddError("");
+              }}
               placeholder="Add a new word, e.g. eloquent"
               required
               autoFocus
@@ -393,6 +425,15 @@ const Vocabulary = () => {
               )}
             </button>
           </form>
+          {addError && (
+            <p
+              className="mt-2 text-sm text-red-600 flex items-center gap-1.5"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              <i className="pi pi-exclamation-circle text-xs" />
+              {addError}
+            </p>
+          )}
         </div>
 
         {/* Word list */}
@@ -494,7 +535,13 @@ const Vocabulary = () => {
                     </thead>
                     <tbody>
                       {words.map((w, idx) => (
-                        <WordRow key={w.id} w={w} idx={idx} page={page} actions={rowActions} />
+                        <WordRow
+                          key={w.id}
+                          w={w}
+                          idx={idx}
+                          page={page}
+                          actions={rowActions}
+                        />
                       ))}
                     </tbody>
                   </table>

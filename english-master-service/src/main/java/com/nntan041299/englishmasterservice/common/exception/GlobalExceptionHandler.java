@@ -1,6 +1,7 @@
 package com.nntan041299.englishmasterservice.common.exception;
 
 import com.nntan041299.englishmasterservice.common.dto.ErrorResponse;
+import com.nntan041299.englishmasterservice.meaning.exception.InvalidWordException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidWordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidWord(InvalidWordException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)

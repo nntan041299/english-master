@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.practice.entity;
 
+import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
 import com.nntan041299.englishmasterservice.meaning.entity.Meaning;
 import jakarta.persistence.Column;
@@ -37,6 +38,10 @@ public class Practice extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "meaning_id", nullable = false)
     private Meaning meaning;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "practice_type", nullable = false, length = 30)

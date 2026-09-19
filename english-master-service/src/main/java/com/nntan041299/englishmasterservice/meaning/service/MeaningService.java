@@ -58,6 +58,7 @@ public class MeaningService {
                 })
                 .map(dto -> Meaning.builder()
                         .word(word)
+                        .user(word.getUser())
                         .partOfSpeech(parsePartOfSpeech(dto.partOfSpeech()))
                         .meaning(StringUtils.capitalizeFirst(dto.meaning()))
                         .ipa(dto.ipa())

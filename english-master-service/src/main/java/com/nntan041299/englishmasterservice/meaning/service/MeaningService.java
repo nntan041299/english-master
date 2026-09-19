@@ -3,6 +3,7 @@ package com.nntan041299.englishmasterservice.meaning.service;
 import com.nntan041299.englishmasterservice.ai.AIService;
 import com.nntan041299.englishmasterservice.ai.AiPromptKey;
 import com.nntan041299.englishmasterservice.ai.AiPromptManager;
+import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.util.StringUtils;
 import com.nntan041299.englishmasterservice.meaning.dto.MeaningAiResponse;
 import com.nntan041299.englishmasterservice.meaning.entity.Category;
@@ -62,7 +63,7 @@ public class MeaningService {
                         .partOfSpeech(parsePartOfSpeech(dto.partOfSpeech()))
                         .meaning(StringUtils.capitalizeFirst(dto.meaning()))
                         .ipa(dto.ipa())
-                        .categories(resolveCategories(dto.categories(), categoryCache))
+                        .categories(resolveCategories(dto.categories(), word.getUser(), categoryCache))
                         .build())
                 .toList();
 
@@ -76,7 +77,8 @@ public class MeaningService {
         log.info("word_enrichment enriched word={}", word.getText());
     }
 
-    private List<Category> resolveCategories(List<String> rawCategories, Map<String, Category> categoryCache) {
+    private List<Category> resolveCategories(
+            List<String> rawCategories, User user, Map<String, Category> categoryCache) {
         if (rawCategories == null || rawCategories.isEmpty()) {
             return List.of();
         }
@@ -84,14 +86,15 @@ public class MeaningService {
                 .filter(name -> name != null && !name.isBlank())
                 .map(name -> name.trim().toLowerCase())
                 .distinct()
-                .map(name -> categoryCache.computeIfAbsent(name, this::findOrCreateCategory))
+                .map(name -> categoryCache.computeIfAbsent(name, key -> findOrCreateCategory(key, user)))
                 .toList();
     }
 
-    private Category findOrCreateCategory(String name) {
+    private Category findOrCreateCategory(String name, User user) {
         return categoryRepository
-                .findByNameIgnoreCase(name)
-                .orElseGet(() -> categoryRepository.save(Category.builder().name(name).build()));
+                .findByNameIgnoreCaseAndUserId(name, user.getId())
+                .orElseGet(() -> categoryRepository.save(
+                        Category.builder().name(name).user(user).build()));
     }
 
     private PartOfSpeech parsePartOfSpeech(String raw) {

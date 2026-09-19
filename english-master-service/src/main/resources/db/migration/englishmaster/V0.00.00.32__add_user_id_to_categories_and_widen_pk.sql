@@ -4,9 +4,10 @@
 -- meaning_categories: a category referenced by only one user's meanings is assigned to
 -- that user directly, while a category referenced by several users' meanings is
 -- duplicated once per additional user, with those users' meaning_categories rows
--- repointed to their own copy.
+-- repointed to their own copy. No foreign key is added on user_id, consistent with the
+-- rest of the schema after V0.00.00.31 dropped all FK constraints.
 
-ALTER TABLE categories ADD COLUMN user_id BIGINT REFERENCES users (id) ON DELETE CASCADE;
+ALTER TABLE categories ADD COLUMN user_id BIGINT;
 
 -- 1. Assign each existing category to one of its owning users (the lowest user_id).
 WITH first_owner AS (

@@ -122,6 +122,7 @@ public abstract class AbstractPracticeGenerationService implements PracticeGener
                 .filter(item -> item.options() != null && !item.options().isEmpty() && item.correctAnswer() != null)
                 .map(item -> Practice.builder()
                         .meaning(meaning)
+                        .user(meaning.getUser())
                         .practiceType(getType())
                         .creationSource(getSource())
                         .question(item.question())

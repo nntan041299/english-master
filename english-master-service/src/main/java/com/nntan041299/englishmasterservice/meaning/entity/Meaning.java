@@ -1,5 +1,6 @@
 package com.nntan041299.englishmasterservice.meaning.entity;
 
+import com.nntan041299.englishmasterservice.auth.entity.User;
 import com.nntan041299.englishmasterservice.common.entity.BaseEntity;
 import com.nntan041299.englishmasterservice.word.entity.Word;
 import jakarta.persistence.Column;
@@ -39,6 +40,10 @@ public class Meaning extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "word_id", nullable = false)
     private Word word;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "part_of_speech", nullable = false, length = 20)

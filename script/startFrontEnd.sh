@@ -21,8 +21,8 @@ if [[ ! -d "$UI_DIR/dist" ]]; then
 fi
 
 echo "Deploying build to $DEPLOY_DIR"
-mkdir -p "$DEPLOY_DIR"
-rm -rf "${DEPLOY_DIR:?}"/*
-cp -r "$UI_DIR"/dist/. "$DEPLOY_DIR"/
+sudo mkdir -p "$DEPLOY_DIR"
+sudo rm -rf "${DEPLOY_DIR:?}"/*
+sudo cp -r "$UI_DIR"/dist/. "$DEPLOY_DIR"/
 
 echo "Frontend deployed to $DEPLOY_DIR"

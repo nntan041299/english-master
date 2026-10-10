@@ -129,7 +129,7 @@ job:
   listening:
     practice:
       generation:
-        enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:false}
+        enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:true}
         cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
 
   meaning:

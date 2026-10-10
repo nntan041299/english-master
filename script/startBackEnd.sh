@@ -7,10 +7,6 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 JAR_DIR="$ROOT_DIR/english-master-service/target"
 PID_FILE="$SCRIPT_DIR/.english-master-service.pid"
-# Application logs are written by logback (one file per day, see logging.* in application.yml).
-export LOG_DIR="${LOG_DIR:-$SCRIPT_DIR/logs}"
-# Only raw JVM output (crashes, startup failures before logging is up) lands here.
-CONSOLE_FILE="$LOG_DIR/console.out"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing env file: $ENV_FILE" >&2
@@ -47,8 +43,7 @@ if [[ -f "$PID_FILE" ]]; then
 fi
 
 echo "Starting $JAR_PATH"
-mkdir -p "$LOG_DIR"
-nohup java -jar "$JAR_PATH" --logging.threshold.console=OFF > "$CONSOLE_FILE" 2>&1 &
+nohup java -jar "$JAR_PATH" > /dev/null 2>&1 &
 NEW_PID=$!
 echo "$NEW_PID" > "$PID_FILE"
-echo "Started in background (PID $NEW_PID), logging to $LOG_DIR/english-master-service.log"
+echo "Started in background (PID $NEW_PID)"

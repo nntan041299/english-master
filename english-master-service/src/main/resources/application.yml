@@ -7,6 +7,21 @@ server:
   port: 8080
 
 # ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+# The current day is written to english-master-service.log; at midnight it is rolled to
+# english-master-service.<yyyy-MM-dd>.<index>.log (index only grows past 0 if a day exceeds
+# max-file-size).
+logging:
+  file:
+    name: ${LOG_DIR:logs}/english-master-service.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:logs}/english-master-service.%d{yyyy-MM-dd}.%i.log
+      max-file-size: ${LOG_MAX_FILE_SIZE:100MB}
+      max-history: ${LOG_MAX_HISTORY_DAYS:30}
+
+# ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
 db:
@@ -114,7 +129,7 @@ job:
   listening:
     practice:
       generation:
-        enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:false}
+        enabled: ${LISTENING_PRACTICE_GENERATION_ENABLED:true}
         cron: ${LISTENING_PRACTICE_GENERATION_CRON:*/5 * * * * *}
 
   meaning:

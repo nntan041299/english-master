@@ -141,3 +141,4 @@ job:
     assignment:
       enabled: ${WORD_PRACTICE_ASSIGNMENT_ENABLED:true}
       cron: ${WORD_PRACTICE_ASSIGNMENT_CRON:*/5 * * * * *}
+
